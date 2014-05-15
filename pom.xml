@@ -7,7 +7,7 @@
     <packaging>hpi</packaging>
 
     <name>Grapes Jenkins plugin</name>
-    <description>Jenkins plugin to plug Grapes to you CI</description>
+    <description>Jenkins plugin to plug Grapes to your CI</description>
     <url>https://github.com/Axway/grapes-jenkins-plugin</url>
 
     <parent>
@@ -18,7 +18,7 @@
 
     <properties>
         <maven.version>3.0.5</maven.version>
-	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <scm>
@@ -160,6 +160,15 @@
 			<groupId>org.apache.maven.plugins</groupId>
 			<artifactId>maven-javadoc-plugin</artifactId>
 			<version>2.9.1</version>
+            <executions>
+                <execution>
+                    <id>attach-sources</id>
+                    <phase>verify</phase>
+                    <goals>
+                        <goal>jar</goal>
+                    </goals>
+                </execution>
+            </executions>
 		</plugin>
 		<plugin>
 			<groupId>org.apache.maven.plugins</groupId>
@@ -205,6 +214,20 @@
                 <configuration>
                     <pluginFirstClassLoader>true</pluginFirstClassLoader>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.2.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
