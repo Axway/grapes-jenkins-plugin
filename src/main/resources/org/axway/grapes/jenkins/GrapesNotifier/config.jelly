@@ -11,6 +11,7 @@
             <div class="error">${%GrapesServer.error(rootURL)}</div>
         </f:entry>
     </j:if>
+
     <j:if test="${servers.size() gt 0}">
         <f:entry title="${%Send notification to }">
             <select class="setting-input" name="configName">
@@ -22,5 +23,9 @@
             </select>
         </f:entry>
     </j:if>
+
+    <f:entry title="${%Manage Grapes Maven Plugin notifications}" field="manageGrapesMavenPlugin">
+        <f:checkbox checked="${manageGrapesMavenPlugin}"/>
+    </f:entry>
 
 </j:jelly>
