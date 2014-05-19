@@ -1,4 +1,4 @@
-package org.axway.grapes.jenkins.notifications;
+package org.axway.grapes.jenkins;
 
 import hudson.Extension;
 import hudson.maven.AbstractMavenProject;
@@ -6,7 +6,7 @@ import hudson.model.ManagementLink;
 import hudson.security.Permission;
 import jenkins.model.Jenkins;
 import org.axway.grapes.jenkins.GrapesPlugin;
-import org.axway.grapes.jenkins.notifications.resend.ResendProjectAction;
+import org.axway.grapes.jenkins.resend.ResendProjectAction;
 import org.kohsuke.stapler.HttpRedirect;
 import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.StaplerRequest;

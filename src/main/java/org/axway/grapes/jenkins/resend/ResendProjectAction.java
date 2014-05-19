@@ -1,4 +1,4 @@
-package org.axway.grapes.jenkins.notifications.resend;
+package org.axway.grapes.jenkins.resend;
 
 import hudson.model.Action;
 import org.axway.grapes.jenkins.GrapesPlugin;

@@ -1,4 +1,4 @@
-package org.axway.grapes.jenkins.notifications;
+package org.axway.grapes.jenkins;
 
 
 import hudson.Extension;
@@ -14,10 +14,9 @@ import hudson.util.FormValidation;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
 import org.axway.grapes.commons.datamodel.Module;
-import org.axway.grapes.jenkins.GrapesPlugin;
 import org.axway.grapes.jenkins.config.GrapesConfig;
-import org.axway.grapes.jenkins.notifications.resend.ResendBuildAction;
-import org.axway.grapes.jenkins.notifications.resend.ResendProjectAction;
+import org.axway.grapes.jenkins.resend.ResendBuildAction;
+import org.axway.grapes.jenkins.resend.ResendProjectAction;
 import org.axway.grapes.jenkins.reports.GrapesBuildAction;
 import org.axway.grapes.utils.client.GrapesClient;
 import org.kohsuke.stapler.DataBoundConstructor;
