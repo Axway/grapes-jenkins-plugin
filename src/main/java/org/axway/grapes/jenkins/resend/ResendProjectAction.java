@@ -4,6 +4,7 @@ import hudson.model.Action;
 import org.axway.grapes.jenkins.GrapesPlugin;
 import org.axway.grapes.jenkins.config.GrapesConfig;
 import org.axway.grapes.utils.client.GrapesClient;
+import org.axway.grapes.jenkins.notifications.GrapesNotification.NotificationType;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -83,18 +84,28 @@ public class ResendProjectAction implements Action {
             }
 
             for (ResendBuildAction resendAction : resendBuildActions) {
-                try {
-                    client.postModule(resendAction.getModule(), user, password);
-                    resendAction.discard();
-                } catch (Exception e) {
-                    GrapesPlugin.getLogger().log(Level.SEVERE,
-                            "[GRAPES] Failed perform resend action of " + resendAction.getModuleName() +
-                                    " in version " + resendAction.getModuleVersion(), e);
+                switch (resendAction.getNotificationType()){
+                    case POST_MODULE:
+                        sendModule(client, resendAction, user, password);
+                        break;
+
+                    default:break;
                 }
             }
 
         }
 
+    }
+
+    private void sendModule(final GrapesClient client, final ResendBuildAction resendAction, final String user, final String password) {
+        try {
+            client.postModule(resendAction.getModule(), user, password);
+            resendAction.discard();
+        } catch (Exception e) {
+            GrapesPlugin.getLogger().log(Level.SEVERE,
+                    "[GRAPES] Failed perform resend action of " + resendAction.getModuleName() +
+                            " in version " + resendAction.getModuleVersion(), e);
+        }
     }
 
     /**

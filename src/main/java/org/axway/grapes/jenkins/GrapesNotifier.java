@@ -15,6 +15,8 @@ import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
 import org.axway.grapes.commons.datamodel.Module;
 import org.axway.grapes.jenkins.config.GrapesConfig;
+import org.axway.grapes.jenkins.notifications.GrapesNotification;
+import org.axway.grapes.jenkins.notifications.GrapesNotification.NotificationType;
 import org.axway.grapes.jenkins.reports.GrapesBuildAction;
 import org.axway.grapes.jenkins.resend.ResendBuildAction;
 import org.axway.grapes.jenkins.resend.ResendProjectAction;
@@ -48,6 +50,10 @@ public class GrapesNotifier extends Notifier {
     // Manage the reports of Grapes Maven plugin
     public Boolean manageGrapesMavenPlugin = false;
 
+    public Boolean getManageGrapesMavenPlugin() {
+        return manageGrapesMavenPlugin;
+    }
+
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
     public GrapesNotifier(final String configName, final boolean manageGrapesMavenPlugin) {
@@ -62,15 +68,13 @@ public class GrapesNotifier extends Notifier {
     /**
      * Performs grapes notification, at the end of the build.
      *
-     * @param build
-     * @param launcher
-     * @param listener
-     * @return
-     * @throws InterruptedException
-     * @throws IOException
+     * @param build    AbstractBuild<?, ?>
+     * @param launcher Launcher
+     * @param listener BuildListener
+     * @return boolean
      */
     @Override
-    public boolean perform(final AbstractBuild<?, ?> build, final Launcher launcher, final BuildListener listener) throws InterruptedException, IOException {
+    public boolean perform(final AbstractBuild<?, ?> build, final Launcher launcher, final BuildListener listener) {
         // No Publication for failed builds
         if (build.getResult() == null ||
                 build.getResult().isWorseThan(Result.SUCCESS)) {
@@ -78,92 +82,115 @@ public class GrapesNotifier extends Notifier {
             return true;
         }
 
+        final List<GrapesNotification> notifications = GrapesPlugin.getAllNotifications(build);
+        if(notifications.isEmpty()){
+            listener.getLogger().println("[GRAPES] No Grapes notification to send.");
+            return true;
+        }
+
         final PrintStream logger = listener.getLogger();
         final AbstractProject<?, ?> project = build.getParent();
 
-        try{
+        final GrapesConfig config = getConfig();
 
 
-            final GrapesConfig config = getConfig();
+        logger.println("[GRAPES] Connection to Grapes");
+        logger.println("[GRAPES] Host: " + config.getHost());
+        logger.println("[GRAPES] Port: " + config.getPort());
 
+        // Manage server configuration
+        final GrapesClient client = new GrapesClient(config.getHost(), String.valueOf(config.getPort()));
+        String user = null, password = null;
 
-            logger.println("[GRAPES] Connection to Grapes");
-            logger.println("[GRAPES] Host: " + config.getHost());
-            logger.println("[GRAPES] Port: " + config.getPort());
+        if (config.getPublisherCredentials() != null) {
+            user = config.getPublisherCredentials().getUsername();
+            password = config.getPublisherCredentials().getPassword();
+        }
 
-            // Manage Exchanges with the server
-            final GrapesClient client = new GrapesClient(config.getHost(), String.valueOf(config.getPort()));
-
-            if (client.isServerAvailable()) {
-                // Notification to the server
-                String user = null, password = null;
-
-                if (config.getPublisherCredentials() != null) {
-                    user = config.getPublisherCredentials().getUsername();
-                    password = config.getPublisherCredentials().getPassword();
+        // Send notifications
+        for(GrapesNotification notification: notifications){
+            try {
+                switch (notification.getNotificationAction()){
+                    case POST_MODULE: sendModule(build, notification, client, user, password, logger);
+                        break;
+                    default:break;
                 }
 
-                if (manageGrapesMavenPlugin) {
-                    boolean sent = false;
-                    final FilePath moduleFilePath = getModuleFilePath(build);
-
-                    if (moduleFilePath.exists()) {
-
-                        logger.println("[GRAPES] Grapes Maven plugin report detected.");
-                        final Module module = GrapesPlugin.getModule(new File(String.valueOf(moduleFilePath)));
-
-                        try {
-
-                            client.postModule(module, user, password);
-                            logger.println("[GRAPES] Information successfully sent");
-                            sent=true;
-
-                            // Clean up previous ResendActions if any
-                            cleanUpResendAction(project, module);
-
-                            // Generate build action with the dependency report
-                            logger.println("[GRAPES] Creation of the dependency report ...");
-                            final GrapesBuildAction buildAction = new GrapesBuildAction(module, client);
-
-                            if (buildAction.isInitOk()) {
-                                build.addAction(buildAction);
-                                logger.println("[GRAPES] Report successfully built.");
-                            }
-
-                        } catch (Exception e) {
-                            logger.println("[GRAPES] The notification has been postpone due to an error.");
-                            GrapesPlugin.getLogger().log(Level.SEVERE, "[GRAPES] An error occurred! ", e);
-
-                        }
-                        finally {
-                            // Keep the Json file in the build history
-                            final FilePath reportFile = GrapesPlugin.getReportFolder(build);
-                            moduleFilePath.copyTo(reportFile);
-
-                            if(!sent){
-                                cleanUpResendAction(project, module);
-                                build.addAction(new ResendBuildAction(reportFile, module.getName(), module.getVersion()));
-                            }
-
-                        }
-
-                    } else {
-                        logger.println("[GRAPES] WARNING: Grapes Maven plugin report does not exist.");
-                        logger.println("[GRAPES] WARNING: Make sure that Grapes Jenkins plugin is still suppose to send Grapes Maven plugin reports.");
-                    }
-                }
+            } catch (Exception e) {
+                logger.println("[GRAPES] The notification has been postpone due to an error.");
+                GrapesPlugin.getLogger().log(Level.SEVERE, "[GRAPES] An error occurred! ", e);
             }
-            else {
-                logger.println("[GRAPES] Notification not sent.");
-                logger.println("[GRAPES] Grapes server is not reachable.");
-            }
-
-        } catch (Exception e){
-            GrapesPlugin.getLogger().log(Level.SEVERE, "[GRAPES] Failed to send notification: ", e);
-            logger.println("[GRAPES] Failed send module report");
         }
 
         return true;
+    }
+
+    /**
+     * Manage Module POST notification
+     *
+     * @param build AbstractBuild<?, ?>
+     * @param notification GrapesNotification
+     * @param client GrapesClient
+     * @param user String
+     * @param password String
+     * @param logger PrintStream     @throws IOException
+     * @throws InterruptedException
+     */
+    private void sendModule(final AbstractBuild<?, ?> build, GrapesNotification notification, final GrapesClient client, final String user, final String password, final PrintStream logger) throws IOException, InterruptedException {
+        boolean sent = false;
+        final FilePath moduleFilePath = notification.getMimePath();
+
+        // No module file, it should be a configuration error
+        if(!moduleFilePath.exists()){
+            logger.println("[GRAPES] WARNING: Grapes Maven plugin report does not exist.");
+            logger.println("[GRAPES] WARNING: Make sure that Grapes Jenkins plugin is still suppose to send Grapes Maven plugin reports.");
+            return;
+        }
+
+        // Keep the Json file in the build history
+        final FilePath reportFile = GrapesPlugin.getReportFolder(build);
+        moduleFilePath.copyTo(reportFile);
+
+        logger.println("[GRAPES] Grapes Maven plugin report detected.");
+        final Module module = GrapesPlugin.getModule(new File(String.valueOf(moduleFilePath)));
+        final AbstractProject<?, ?> project = build.getParent();
+
+        // Post the module
+        try {
+            // If server is not reachable, let's postpone the notification
+            if(!client.isServerAvailable()) {
+                final ResendBuildAction resendAction = new ResendBuildAction(NotificationType.POST_MODULE, reportFile, module.getName(), module.getVersion());
+                build.addAction(resendAction);
+                logger.println("[GRAPES] WARNING: Grapes server is not reachable yet, notification has been postponed.");
+                return;
+            }
+            
+            client.postModule(module, user, password);
+            sent = true;
+            logger.println("[GRAPES] Module successfully sent");
+
+            // Clean up previous ResendActions if any
+            cleanUpResendAction(project, module);
+
+            // Generate build action with the dependency report
+            final GrapesBuildAction buildAction = new GrapesBuildAction(module, client);
+
+            if (buildAction.isInitOk()) {
+                build.addAction(buildAction);
+                logger.println("[GRAPES] Report successfully built.");
+            }
+
+        } catch (Exception e) {
+            logger.println("[GRAPES] The notification has been postpone due to an error.");
+            GrapesPlugin.getLogger().log(Level.SEVERE, "[GRAPES] An error occurred! ", e);
+
+        }
+        finally {
+            if(!sent){
+                final ResendBuildAction resendAction = new ResendBuildAction(NotificationType.POST_MODULE, reportFile, module.getName(), module.getVersion());
+                build.addAction(resendAction);
+            }
+        }
 
     }
 
@@ -176,17 +203,6 @@ public class GrapesNotifier extends Notifier {
         final GrapesNotifierDescriptor descriptor = (GrapesNotifierDescriptor) getDescriptor();
         return descriptor.getConfiguration(configName);
     }
-
-    /**
-     * Returns the location of Grapes module file
-     *
-     * @param build AbstractBuild<?, ?>
-     * @return FilePath
-     */
-    private FilePath getModuleFilePath(final AbstractBuild<?, ?> build) {
-        return build.getWorkspace().child("target/" + GrapesPlugin.GRAPES_WORKING_FOLDER + "/" + GrapesPlugin.GRAPES_MODULE_FILE);
-    }
-
 
     /**
      * Returns module to ResendBuildAction if it exist in Job's properties

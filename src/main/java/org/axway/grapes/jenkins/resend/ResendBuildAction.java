@@ -5,6 +5,8 @@ import hudson.model.Action;
 import org.axway.grapes.commons.datamodel.Module;
 import org.axway.grapes.commons.utils.FileUtils;
 import org.axway.grapes.commons.utils.JsonUtils;
+import org.axway.grapes.jenkins.notifications.GrapesNotification;
+import org.axway.grapes.jenkins.notifications.GrapesNotification.NotificationType;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,7 +14,7 @@ import java.io.IOException;
 /**
  * Resend Action
  *
- * <p>Associated to a build, this action is created when the notification failed. The aim is to keep the information about modules to resend.</p>
+ * <p>Associated to a build, this action is created when the notification failed. The aim is to keep the information about the notification to be able to resend it.</p>
  * <p>The configuration for resend is stored in the job configuration. This action will not be displayed in the build because notification resend are performed from the administration panel.</p>
  *
  * @author jdcoffre
@@ -22,10 +24,13 @@ public class ResendBuildAction implements Action {
     private static final String SENT_INFO_FILE = ".sent";
 
     private final FilePath reportPath;
+    private final NotificationType action;
+
     private String moduleName;
     private String moduleVersion;
 
-    public ResendBuildAction(final FilePath reportPath, final String moduleName, final String moduleVersion) {
+    public ResendBuildAction(final NotificationType action, final FilePath reportPath, final String moduleName, final String moduleVersion) {
+        this.action = action;
         this.reportPath = reportPath;
         this.moduleName = moduleName;
         this.moduleVersion = moduleVersion;
@@ -63,6 +68,10 @@ public class ResendBuildAction implements Action {
 
     public String getModuleVersion() {
         return moduleVersion;
+    }
+
+    public NotificationType getNotificationType() {
+        return action;
     }
 
     /**
