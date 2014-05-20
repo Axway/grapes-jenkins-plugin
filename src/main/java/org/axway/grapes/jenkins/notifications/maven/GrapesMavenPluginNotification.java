@@ -27,7 +27,6 @@ public class GrapesMavenPluginNotification extends GrapesNotification {
 
     @Override
     public FilePath getMimePath() {
-        final GrapesMavenPluginNotificationDescriptorImpl descriptor = (GrapesMavenPluginNotificationDescriptorImpl) getDescriptor();
         return moduleFilePath;
     }
 
