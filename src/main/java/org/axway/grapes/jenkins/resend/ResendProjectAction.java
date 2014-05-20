@@ -89,12 +89,35 @@ public class ResendProjectAction implements Action {
                         sendModule(client, resendAction, user, password);
                         break;
 
+                    case PROMOTE:
+                        promoteModule(client, resendAction, user, password);
+                        break;
+
                     default:break;
                 }
             }
 
         }
 
+    }
+
+    /**
+     * Manage re-send module promotion
+     *
+     * @param client GrapesClient
+     * @param resendAction ResendBuildAction
+     * @param user String
+     * @param password String
+     */
+    private void promoteModule(final GrapesClient client, final ResendBuildAction resendAction, final String user, final String password) {
+        try {
+            client.promoteModule(resendAction.getModuleName(), resendAction.getModuleVersion(), user, password);
+            resendAction.discard();
+        } catch (Exception e) {
+            GrapesPlugin.getLogger().log(Level.SEVERE,
+                    "[GRAPES] Failed perform resend action of " + resendAction.getModuleName() +
+                            " in version " + resendAction.getModuleVersion(), e);
+        }
     }
 
     /**

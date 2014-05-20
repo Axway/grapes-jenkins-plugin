@@ -113,6 +113,8 @@ public class GrapesNotifier extends Notifier {
                 switch (notification.getNotificationAction()){
                     case POST_MODULE: sendModule(build, notification, client, user, password, logger);
                         break;
+                    case PROMOTE: promoteModule(build, notification, client, user, password, logger);
+                        break;
                     default:break;
                 }
 
@@ -123,6 +125,44 @@ public class GrapesNotifier extends Notifier {
         }
 
         return true;
+    }
+
+    /**
+     * Manage module promotion
+     *
+     * @param build AbstractBuild<?, ?>
+     * @param notification GrapesNotification
+     * @param client GrapesClient
+     * @param user String
+     * @param password String
+     * @param logger PrintStream     @throws IOException
+     */
+    private void promoteModule(final AbstractBuild<?, ?> build, final GrapesNotification notification, final GrapesClient client, final String user, final String password, final PrintStream logger) {
+        boolean sent = false;
+        try {
+            // If server is not reachable, let's postpone the notification
+            if(!client.isServerAvailable()) {
+                final ResendBuildAction resendAction = new ResendBuildAction(NotificationType.PROMOTE, null, notification.moduleName(), notification.moduleVersion());
+                build.addAction(resendAction);
+                logger.println("[GRAPES] WARNING: Grapes server is not reachable yet, notification has been postponed.");
+                return;
+            }
+
+            client.promoteModule( notification.moduleName(), notification.moduleVersion(), user, password);
+            sent = true;
+            logger.println("[GRAPES] Module successfully promoted");
+
+        } catch (Exception e) {
+            logger.println("[GRAPES] The notification has been postpone due to an error.");
+            GrapesPlugin.getLogger().log(Level.SEVERE, "[GRAPES] An error occurred! ", e);
+
+        }
+        finally {
+            if(!sent){
+                final ResendBuildAction resendAction = new ResendBuildAction(NotificationType.PROMOTE, null, notification.moduleName(), notification.moduleVersion());
+                build.addAction(resendAction);
+            }
+        }
     }
 
     /**

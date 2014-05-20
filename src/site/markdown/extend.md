@@ -15,15 +15,23 @@ How to extend?
  
  The Jenkins plugin will instantiate your implementation of GrapesNotification at the notification time and will send it to the Grapes server using it own configuration.
 
-Currently, one kind of notification is available
+Available notifications
 
- * POST_MODULE notification
+ * POST_MODULE
+ * PROMOTE 
  
  
-POST_MODULE notification
-------------------------
+POST_MODULE
+-----------
 
 A POST_MODULE notification sends Module object to a Grapes server. This will create or perform an update of the module information into Grapes database.
 
 _**Default implementation:**_ the default implementation of this notification is done to send Grapes Maven plugin reports. You can activate it in the job configuration using "Manage Grapes Maven plugin Notification".
 For more information see the [Grapes Jenkins plugin usage](usage.html) page.
+
+PROMOTE
+-------
+
+A PROMOTE notification make the server add a flag promoted on a targeted module.
+
+_**Default implementation:**_ there is no default implementation for now.

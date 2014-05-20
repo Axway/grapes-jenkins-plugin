@@ -18,7 +18,7 @@ import org.axway.grapes.jenkins.resend.ResendBuildAction;
  */
 public abstract class GrapesNotification implements Describable<GrapesNotification>, ExtensionPoint {
 
-    public static enum NotificationType {POST_MODULE};
+    public static enum NotificationType {POST_MODULE, PROMOTE};
 
     /**
      * Returns the kind of notification the Grapes Jenkins notifier should perform
