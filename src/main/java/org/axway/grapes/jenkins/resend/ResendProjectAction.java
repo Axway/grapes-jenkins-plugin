@@ -97,6 +97,14 @@ public class ResendProjectAction implements Action {
 
     }
 
+    /**
+     * Manage re-send module on ResendBuildAction
+     *
+     * @param client GrapesClient
+     * @param resendAction ResendBuildAction
+     * @param user String
+     * @param password String
+     */
     private void sendModule(final GrapesClient client, final ResendBuildAction resendAction, final String user, final String password) {
         try {
             client.postModule(resendAction.getModule(), user, password);
@@ -109,8 +117,9 @@ public class ResendProjectAction implements Action {
     }
 
     /**
-     * Returns the lis
-     * @return
+     * Returns the list of modules information
+     *
+     * @return Map<String, String>
      */
     public Map<String, String> getModulesInfo() {
         final Map<String, String> modulesInfo = new HashMap<String, String>();
