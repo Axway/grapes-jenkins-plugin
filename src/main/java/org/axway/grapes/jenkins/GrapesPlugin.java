@@ -36,6 +36,15 @@ public class GrapesPlugin extends Plugin {
     public static final String GRAPES_MODULE_FILE = "module.json";
 
     /**
+     * Returns Grapes Jenkins plugin logger
+     *
+     * @return Logger
+     */
+    public static Logger getLogger(){
+        return LogManager.getLogManager().getLogger("hudson.WebAppMain");
+    }
+
+    /**
      * Returns the path or URL to access web resources from this plugin.
      *
      * @return resource path
@@ -60,7 +69,7 @@ public class GrapesPlugin extends Plugin {
     }
 
     /**
-     * Returns Grapes module of a build
+     * Un-serialize a Module from Json file
      *
      * @param moduleFile
      * @return
@@ -74,15 +83,6 @@ public class GrapesPlugin extends Plugin {
         }
 
         return null;
-    }
-
-    /**
-     * Returns Grapes Jenkins plugin logger
-     *
-     * @return Logger
-     */
-    public static Logger getLogger(){
-        return LogManager.getLogManager().getLogger("hudson.WebAppMain");
     }
 
 
