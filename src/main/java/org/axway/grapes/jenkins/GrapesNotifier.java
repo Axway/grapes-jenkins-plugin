@@ -352,8 +352,15 @@ public class GrapesNotifier extends Notifier {
 
         @Override
         public boolean configure(final StaplerRequest req, final JSONObject json) {
-            req.bindJSON(this, json);
+            if(json.containsKey("servers")){
+                req.bindJSON(this, json);
+            }
+            else{
+                servers = null;
+            }
+
             save();
+            
             return true;
         }
 
