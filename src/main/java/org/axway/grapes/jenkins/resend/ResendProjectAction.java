@@ -1,9 +1,10 @@
-package org.axway.grapes.jenkins.notifications.resend;
+package org.axway.grapes.jenkins.resend;
 
 import hudson.model.Action;
 import org.axway.grapes.jenkins.GrapesPlugin;
 import org.axway.grapes.jenkins.config.GrapesConfig;
 import org.axway.grapes.utils.client.GrapesClient;
+import org.axway.grapes.jenkins.notifications.GrapesNotification.NotificationType;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -83,13 +84,16 @@ public class ResendProjectAction implements Action {
             }
 
             for (ResendBuildAction resendAction : resendBuildActions) {
-                try {
-                    client.postModule(resendAction.getModule(), user, password);
-                    resendAction.discard();
-                } catch (Exception e) {
-                    GrapesPlugin.getLogger().log(Level.SEVERE,
-                            "[GRAPES] Failed perform resend action of " + resendAction.getModuleName() +
-                                    " in version " + resendAction.getModuleVersion(), e);
+                switch (resendAction.getNotificationType()){
+                    case POST_MODULE:
+                        sendModule(client, resendAction, user, password);
+                        break;
+
+                    case PROMOTE:
+                        promoteModule(client, resendAction, user, password);
+                        break;
+
+                    default:break;
                 }
             }
 
@@ -98,8 +102,47 @@ public class ResendProjectAction implements Action {
     }
 
     /**
-     * Returns the lis
-     * @return
+     * Manage re-send module promotion
+     *
+     * @param client GrapesClient
+     * @param resendAction ResendBuildAction
+     * @param user String
+     * @param password String
+     */
+    private void promoteModule(final GrapesClient client, final ResendBuildAction resendAction, final String user, final String password) {
+        try {
+            client.promoteModule(resendAction.getModuleName(), resendAction.getModuleVersion(), user, password);
+            resendAction.discard();
+        } catch (Exception e) {
+            GrapesPlugin.getLogger().log(Level.SEVERE,
+                    "[GRAPES] Failed perform resend action of " + resendAction.getModuleName() +
+                            " in version " + resendAction.getModuleVersion(), e);
+        }
+    }
+
+    /**
+     * Manage re-send module on ResendBuildAction
+     *
+     * @param client GrapesClient
+     * @param resendAction ResendBuildAction
+     * @param user String
+     * @param password String
+     */
+    private void sendModule(final GrapesClient client, final ResendBuildAction resendAction, final String user, final String password) {
+        try {
+            client.postModule(resendAction.getModule(), user, password);
+            resendAction.discard();
+        } catch (Exception e) {
+            GrapesPlugin.getLogger().log(Level.SEVERE,
+                    "[GRAPES] Failed perform resend action of " + resendAction.getModuleName() +
+                            " in version " + resendAction.getModuleVersion(), e);
+        }
+    }
+
+    /**
+     * Returns the list of modules information
+     *
+     * @return Map<String, String>
      */
     public Map<String, String> getModulesInfo() {
         final Map<String, String> modulesInfo = new HashMap<String, String>();

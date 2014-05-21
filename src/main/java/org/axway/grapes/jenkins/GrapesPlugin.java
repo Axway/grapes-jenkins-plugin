@@ -4,13 +4,19 @@ import hudson.FilePath;
 import hudson.Plugin;
 import hudson.PluginWrapper;
 import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
 import hudson.model.Hudson;
+import hudson.tasks.Publisher;
 import org.axway.grapes.commons.datamodel.Module;
 import org.axway.grapes.commons.utils.FileUtils;
 import org.axway.grapes.commons.utils.JsonUtils;
+import org.axway.grapes.jenkins.notifications.GrapesNotification;
+import org.axway.grapes.jenkins.notifications.GrapesNotificationDescriptor;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
@@ -28,6 +34,15 @@ public class GrapesPlugin extends Plugin {
     public static final String GRAPES_WORKING_FOLDER = "grapes";
 
     public static final String GRAPES_MODULE_FILE = "module.json";
+
+    /**
+     * Returns Grapes Jenkins plugin logger
+     *
+     * @return Logger
+     */
+    public static Logger getLogger(){
+        return LogManager.getLogManager().getLogger("hudson.WebAppMain");
+    }
 
     /**
      * Returns the path or URL to access web resources from this plugin.
@@ -54,7 +69,7 @@ public class GrapesPlugin extends Plugin {
     }
 
     /**
-     * Returns Grapes module of a build
+     * Un-serialize a Module from Json file
      *
      * @param moduleFile
      * @return
@@ -70,12 +85,42 @@ public class GrapesPlugin extends Plugin {
         return null;
     }
 
+
     /**
-     * Returns Grapes Jenkins plugin logger
+     * Returns the Grapes Notifier instance of the build (null if there is none)
      *
-     * @return Logger
+     * @param build AbstractBuild<?, ?>
+     * @return GrapesNotifier
      */
-    public static Logger getLogger(){
-        return LogManager.getLogManager().getLogger("hudson.WebAppMain");
+    public static GrapesNotifier getGrapesNotifier(final AbstractBuild<?, ?> build){
+        AbstractProject<?, ?> project = build.getProject();
+
+        for(Publisher publisher : project.getPublishersList()){
+            if(publisher instanceof GrapesNotifier){
+               return (GrapesNotifier) publisher;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Returns all the Grapes notifications of the build
+     *
+     * @param build
+     * @return
+     */
+    public static List<GrapesNotification> getAllNotifications(final AbstractBuild<?, ?> build) {
+        final List<GrapesNotification> notifications = new ArrayList<GrapesNotification>();
+
+        for(GrapesNotificationDescriptor notifDescriptor: GrapesNotificationDescriptor.all()){
+            final GrapesNotification notification = notifDescriptor.newAutoInstance(build);
+
+            if(notification != null){
+                notifications.add(notification);
+            }
+        }
+
+        return notifications;
     }
 }

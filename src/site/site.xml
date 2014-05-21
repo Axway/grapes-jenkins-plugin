@@ -36,6 +36,7 @@
         <menu name="Documentation">
             <item name="Introduction" href="index.html"/>
             <item name="Usage" href="usage.html"/>
+            <item name="Extends Grapes Jenkins plugin" href="extend.html"/>
         </menu>
 
         <footer/>
