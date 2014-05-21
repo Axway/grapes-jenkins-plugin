@@ -16,7 +16,7 @@
         <f:entry title="${%Send notification to }">
             <select class="setting-input" name="configName">
                 <j:forEach var="server" items="${servers}">
-                    <f:option value="${server.name}" selected="${server.name== instance.getConfigName()}">
+                    <f:option value="${server.name}" selected="${server.name == instance.configName}">
                         ${server.name}
                     </f:option>
                 </j:forEach>

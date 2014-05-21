@@ -45,7 +45,7 @@ import java.util.logging.Level;
 public class GrapesNotifier extends Notifier {
 
     // Name of current Grapes configuration
-    private String configName;
+    public String configName;
 
     // Manage the reports of Grapes Maven plugin
     public Boolean manageGrapesMavenPlugin = false;
