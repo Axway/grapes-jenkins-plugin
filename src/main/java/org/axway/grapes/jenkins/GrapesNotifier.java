@@ -187,7 +187,7 @@ public class GrapesNotifier extends Notifier {
         }
 
         // Keep the Json file in the build history
-        final FilePath reportFile = GrapesPlugin.getReportFolder(build);
+        final FilePath reportFile = GrapesPlugin.getBuildReportFile(build);
         moduleFilePath.copyTo(reportFile);
 
         logger.println("[GRAPES] Grapes Maven plugin report detected.");

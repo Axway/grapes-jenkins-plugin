@@ -27,7 +27,7 @@ public abstract class GrapesNotification implements Describable<GrapesNotificati
 
     /**
      * Returns the file path of the mime that should be sent to Grapes server during the notification
-     * <p> Required for POST_MODULE Action</p>
+     * <p> Required for NotificationType that implies to send a MIME to Grapes server </p>
      *
      * @return FilePath
      */
@@ -35,7 +35,6 @@ public abstract class GrapesNotification implements Describable<GrapesNotificati
 
     /**
      * Returns the module name that is targeted by the notification
-     * <p> Required for PROMOTE Action</p>
      *
      * @return String
      */
@@ -43,7 +42,6 @@ public abstract class GrapesNotification implements Describable<GrapesNotificati
 
     /**
      * Returns the module version that is targeted by the notification
-     * <p> Required for PROMOTE Action</p>
      *
      * @return String
      */

@@ -57,12 +57,12 @@ public class GrapesPlugin extends Plugin {
     }
 
     /**
-     * Provides build report folder for Grapes archives
+     * Provides build report file for Grapes archives
      *
      * @param build AbstractBuild
      * @return FilePath
      */
-    public static FilePath getReportFolder(final AbstractBuild<?, ?> build) {
+    public static FilePath getBuildReportFile(final AbstractBuild<?, ?> build) {
         assert build != null;
         final File reportFolder = new File(build.getRootDir(), REPORT_FILE);
         return  new FilePath(reportFolder);
