@@ -4,7 +4,6 @@ import hudson.model.Action;
 import org.axway.grapes.jenkins.GrapesPlugin;
 import org.axway.grapes.jenkins.config.GrapesConfig;
 import org.axway.grapes.utils.client.GrapesClient;
-import org.axway.grapes.jenkins.notifications.GrapesNotification.NotificationType;
 
 import java.util.ArrayList;
 import java.util.HashMap;

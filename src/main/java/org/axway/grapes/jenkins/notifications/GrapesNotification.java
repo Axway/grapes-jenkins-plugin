@@ -2,10 +2,8 @@ package org.axway.grapes.jenkins.notifications;
 
 import hudson.ExtensionPoint;
 import hudson.FilePath;
-import hudson.model.AbstractBuild;
 import hudson.model.Describable;
 import jenkins.model.Jenkins;
-import org.axway.grapes.jenkins.resend.ResendBuildAction;
 
 /**
  * Grapes Notification

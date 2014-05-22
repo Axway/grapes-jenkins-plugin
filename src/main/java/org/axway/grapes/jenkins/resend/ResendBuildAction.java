@@ -5,7 +5,6 @@ import hudson.model.Action;
 import org.axway.grapes.commons.datamodel.Module;
 import org.axway.grapes.commons.utils.FileUtils;
 import org.axway.grapes.commons.utils.JsonUtils;
-import org.axway.grapes.jenkins.notifications.GrapesNotification;
 import org.axway.grapes.jenkins.notifications.GrapesNotification.NotificationType;
 
 import java.io.File;

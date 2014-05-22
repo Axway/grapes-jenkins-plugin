@@ -7,7 +7,6 @@ import org.axway.grapes.jenkins.GrapesNotifier;
 import org.axway.grapes.jenkins.GrapesPlugin;
 import org.axway.grapes.jenkins.notifications.GrapesNotification;
 import org.axway.grapes.jenkins.notifications.GrapesNotificationDescriptor;
-import org.axway.grapes.jenkins.resend.ResendBuildAction;
 
 /**
  * Grapes Maven plugin Notification
@@ -71,7 +70,8 @@ public class GrapesMavenPluginNotification extends GrapesNotification {
          * @return FilePath
          */
         private FilePath getModuleFilePath(final AbstractBuild<?, ?> build) {
-            return build.getWorkspace().child("target/" + GrapesPlugin.GRAPES_WORKING_FOLDER + "/" + GrapesPlugin.GRAPES_MODULE_FILE);
+            // Use root module in stead of Workspace dir in case of custom checkout
+            return build.getModuleRoot().child("target/" + GrapesPlugin.GRAPES_WORKING_FOLDER + "/" + GrapesPlugin.GRAPES_MODULE_FILE);
         }
     }
 }

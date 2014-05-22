@@ -183,7 +183,6 @@ public class GrapesNotifier extends Notifier {
         // No module file, it should be a configuration error
         if(!moduleFilePath.exists()){
             logger.println("[GRAPES] WARNING: Grapes Maven plugin report does not exist.");
-            logger.println("[GRAPES] WARNING: Make sure that Grapes Jenkins plugin is still suppose to send Grapes Maven plugin reports.");
             return;
         }
 
