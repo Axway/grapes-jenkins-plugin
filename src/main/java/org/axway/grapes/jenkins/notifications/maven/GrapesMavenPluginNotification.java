@@ -36,12 +36,12 @@ public class GrapesMavenPluginNotification extends GrapesNotification {
     }
 
     @Override
-    public String moduleName() {
+    public String getModuleName() {
         return moduleName;
     }
 
     @Override
-    public String moduleVersion() {
+    public String getModuleVersion() {
         return moduleVersion;
     }
 
@@ -61,7 +61,7 @@ public class GrapesMavenPluginNotification extends GrapesNotification {
     public static final class GrapesMavenPluginNotificationDescriptorImpl extends GrapesNotificationDescriptor{
 
         @Override
-        public GrapesNotification newAutoInstance(AbstractBuild<?, ?> build) {
+        public GrapesNotification createAutoInstance(AbstractBuild<?, ?> build) {
             GrapesMavenPluginNotification notification = null;
             try{
                 final GrapesNotifier notifier = GrapesPlugin.getGrapesNotifier(build.getProject());

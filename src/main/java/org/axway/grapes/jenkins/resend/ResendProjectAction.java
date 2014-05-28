@@ -63,7 +63,7 @@ public class ResendProjectAction implements Action {
 
         final Map<String, String> modulesInfo = new HashMap<String, String>();
         for(ResendBuildAction action: resendBuildActions){
-            modulesInfo.put(action.moduleName(), action.moduleVersion());
+            modulesInfo.put(action.getModuleName(), action.getModuleVersion());
         }
         return modulesInfo;
     }

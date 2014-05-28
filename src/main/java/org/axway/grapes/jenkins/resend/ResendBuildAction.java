@@ -1,8 +1,12 @@
 package org.axway.grapes.jenkins.resend;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import hudson.FilePath;
 import hudson.model.Action;
 import org.axway.grapes.jenkins.notifications.GrapesNotification;
+import org.axway.grapes.jenkins.resend.json.ResendBuildActionDeserializer;
+import org.axway.grapes.jenkins.resend.json.ResendBuildActionSerializer;
 
 /**
  * Resend Action
@@ -12,38 +16,47 @@ import org.axway.grapes.jenkins.notifications.GrapesNotification;
  *
  * @author jdcoffre
  */
+@JsonSerialize(using=ResendBuildActionSerializer.class)
+@JsonDeserialize(using=ResendBuildActionDeserializer.class)
 public class ResendBuildAction extends GrapesNotification implements Action {
 
-    private final FilePath reportPath;
-    private final NotificationType action;
+    private final FilePath mimePath;
+    private final NotificationType notificationAction;
 
-    private String moduleName;
-    private String moduleVersion;
+    private final String moduleName;
+    private final String moduleVersion;
+
+    public ResendBuildAction(final NotificationType notificationAction, final FilePath mimePath, final String moduleName, final String moduleVersion) {
+        this.notificationAction = notificationAction;
+        this.mimePath = mimePath;
+        this.moduleName = moduleName;
+        this.moduleVersion = moduleVersion;
+    }
 
     public ResendBuildAction(final GrapesNotification notification) {
-        this.action = notification.getNotificationAction();
-        this.reportPath = notification.getMimePath();
-        this.moduleName = notification.moduleName();
-        this.moduleVersion = notification.moduleVersion();
+        this.notificationAction = notification.getNotificationAction();
+        this.mimePath = notification.getMimePath();
+        this.moduleName = notification.getModuleName();
+        this.moduleVersion = notification.getModuleVersion();
     }
 
     @Override
     public NotificationType getNotificationAction() {
-        return action;
+        return notificationAction;
     }
 
     @Override
     public FilePath getMimePath() {
-        return reportPath;
+        return mimePath;
     }
 
     @Override
-    public String moduleName() {
+    public String getModuleName() {
         return moduleName;
     }
 
     @Override
-    public String moduleVersion() {
+    public String getModuleVersion() {
         return moduleVersion;
     }
 
@@ -66,9 +79,9 @@ public class ResendBuildAction extends GrapesNotification implements Action {
     public boolean equals(final Object obj){
         if(obj instanceof GrapesNotification){
             final GrapesNotification notification = (GrapesNotification)obj;
-            return moduleName.equals(notification.moduleName()) &&
-                    moduleVersion.equals(notification.moduleVersion()) &&
-                     action.equals(notification.getNotificationAction());
+            return moduleName.equals(notification.getModuleName()) &&
+                    moduleVersion.equals(notification.getModuleVersion()) &&
+                     notificationAction.equals(notification.getNotificationAction());
         }
 
         return false;

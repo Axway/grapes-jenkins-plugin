@@ -25,7 +25,7 @@ public abstract class GrapesNotificationDescriptor extends Descriptor<GrapesNoti
      * @param build
      * @return
      */
-    public abstract GrapesNotification newAutoInstance(AbstractBuild<?, ?> build);
+    public abstract GrapesNotification createAutoInstance(AbstractBuild<?, ?> build);
 
     /**
      *  Lists all the currently registered instances of {@link GrapesNotificationDescriptor}.

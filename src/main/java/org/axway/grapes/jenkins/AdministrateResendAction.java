@@ -3,9 +3,13 @@ package org.axway.grapes.jenkins;
 import hudson.Extension;
 import hudson.maven.AbstractMavenProject;
 import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
+import hudson.model.Action;
 import hudson.model.ManagementLink;
 import hudson.security.Permission;
 import jenkins.model.Jenkins;
+import org.axway.grapes.jenkins.config.GrapesConfig;
+import org.axway.grapes.jenkins.notifications.NotificationHandler;
 import org.axway.grapes.jenkins.resend.ResendBuildAction;
 import org.axway.grapes.jenkins.resend.ResendProjectAction;
 import org.kohsuke.stapler.HttpRedirect;
@@ -58,7 +62,7 @@ public class AdministrateResendAction extends ManagementLink {
     public void refresh(){
         resendActions.clear();
         for(AbstractMavenProject mavenProject: Jenkins.getInstance().getAllItems(AbstractMavenProject.class)){
-            final ResendProjectAction resendProjectAction = GrapesPlugin.getAllResendActions(mavenProject);
+            final ResendProjectAction resendProjectAction = getAllResendActions(mavenProject);
             if(resendProjectAction != null){
                 resendActions.add(resendProjectAction);
             }
@@ -108,6 +112,50 @@ public class AdministrateResendAction extends ManagementLink {
         refresh();
 
         return HttpRedirect.DOT;
+    }
+
+    /**
+     * Returns all the Grapes resend action of the build (never null, empty list if there is none)
+     *
+     * @param build AbstractBuild<?, ?>
+     * @return List<ResendBuildAction
+     */
+    private List<ResendBuildAction> getAllResendActions(final AbstractBuild<?, ?> build) {
+        final List<ResendBuildAction> resendActions = new ArrayList<ResendBuildAction>();
+
+        for(Action transientAction: build.getTransientActions()){
+
+            if(transientAction instanceof ResendBuildAction){
+                resendActions.add((ResendBuildAction)transientAction);
+            }
+        }
+
+        return resendActions;
+    }
+
+    /**
+     * Returns all the Grapes resend Action of a project (null if empty)
+     *
+     * @param project AbstractProject<?, ?>
+     * @return ResendProjectAction
+     */
+    private ResendProjectAction getAllResendActions(final AbstractProject<?, ?> project) {
+        final List<ResendProjectAction> resendProjectActions = project.getActions(ResendProjectAction.class);
+
+        final GrapesConfig config = GrapesPlugin.getGrapesConfiguration(project);
+        final Map<AbstractBuild<?,?> , List<ResendBuildAction>> resendBuildActions = new HashMap<AbstractBuild<?, ?>, List<ResendBuildAction>>();
+        for(Object run : project.getBuilds()){
+            if(run instanceof AbstractBuild){
+                final AbstractBuild<?,?> build = (AbstractBuild)run;
+                resendBuildActions.put(build, getAllResendActions(build));
+            }
+        }
+
+        if(!resendBuildActions.isEmpty() &&  config != null){
+            return new ResendProjectAction(resendBuildActions, config);
+        }
+
+        return null;
     }
 
 }

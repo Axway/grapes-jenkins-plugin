@@ -17,12 +17,15 @@ import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
 import org.axway.grapes.jenkins.config.GrapesConfig;
 import org.axway.grapes.jenkins.notifications.GrapesNotification;
+import org.axway.grapes.jenkins.notifications.GrapesNotificationDescriptor;
+import org.axway.grapes.jenkins.notifications.NotificationHandler;
 import org.axway.grapes.utils.client.GrapesClient;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -73,7 +76,7 @@ public class GrapesNotifier extends Notifier {
             return true;
         }
 
-        final List<GrapesNotification> notifications = GrapesPlugin.getAllNotifications(build);
+        final List<GrapesNotification> notifications = getAllNotifications(build);
         if(notifications.isEmpty()){
             listener.getLogger().println("[GRAPES] No Grapes notification to send.");
             return true;
@@ -111,6 +114,26 @@ public class GrapesNotifier extends Notifier {
     protected GrapesConfig getConfig() {
         final GrapesNotifierDescriptor descriptor = (GrapesNotifierDescriptor) getDescriptor();
         return descriptor.getConfiguration(configName);
+    }
+
+    /**
+     * Returns all the Grapes notifications of a build (never null, empty list if there is none)
+     *
+     * @param build AbstractBuild<?, ?>
+     * @return List<GrapesNotification>
+     */
+    private static List<GrapesNotification> getAllNotifications(final AbstractBuild<?, ?> build) {
+        final List<GrapesNotification> notifications = new ArrayList<GrapesNotification>();
+
+        for(GrapesNotificationDescriptor notifDescriptor: GrapesNotificationDescriptor.all()){
+            final GrapesNotification notification = notifDescriptor.createAutoInstance(build);
+
+            if(notification != null){
+                notifications.add(notification);
+            }
+        }
+
+        return notifications;
     }
 
     /**

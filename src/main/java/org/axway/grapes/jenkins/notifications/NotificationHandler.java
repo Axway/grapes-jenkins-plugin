@@ -1,20 +1,20 @@
-package org.axway.grapes.jenkins;
+package org.axway.grapes.jenkins.notifications;
 
 import hudson.FilePath;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import org.axway.grapes.commons.datamodel.Module;
+import org.axway.grapes.commons.utils.FileUtils;
+import org.axway.grapes.commons.utils.JsonUtils;
+import org.axway.grapes.jenkins.GrapesPlugin;
 import org.axway.grapes.jenkins.config.GrapesConfig;
-import org.axway.grapes.jenkins.notifications.GrapesNotification;
 import org.axway.grapes.jenkins.reports.GrapesBuildAction;
 import org.axway.grapes.jenkins.resend.ResendBuildAction;
-import org.axway.grapes.jenkins.resend.ResendProjectAction;
 import org.axway.grapes.utils.client.GrapesClient;
 import org.axway.grapes.utils.client.GrapesCommunicationException;
 
 import java.io.File;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 
 /**
@@ -25,6 +25,8 @@ import java.util.logging.Level;
  * @author jdcoffre
  */
 public class NotificationHandler {
+
+    public static final String TO_RESEND_SUFFIX = "-to-resend";
 
     private final GrapesClient client;
     private String password;
@@ -70,20 +72,16 @@ public class NotificationHandler {
     }
 
     private void promoteModule(final GrapesNotification notification, final AbstractBuild<?, ?> build) throws GrapesCommunicationException {
-        if(!client.isServerAvailable()){
-            GrapesPlugin.getLogger().log(Level.SEVERE, "[GRAPES] Grapes server is not available ");
-            throw new GrapesCommunicationException(404);
-        }
-
         try {
-            client.promoteModule(notification.moduleName(), notification.moduleVersion(), user, password);
-            GrapesPlugin.markAsSent(notification, build);
+            client.promoteModule(notification.getModuleName(), notification.getModuleVersion(), user, password);
 
             //discard old resend action if matches moduleName moduleVersion notification type
-            discardOldResend(notification, build);
+            discardOldResend(notification, build.getProject());
 
         } catch (Exception e) {
             GrapesPlugin.getLogger().log(Level.SEVERE, "[GRAPES] An error occurred during module promotion ", e);
+            discardOldResend(notification, build.getProject());
+            saveNotification(notification, build);
             throw new GrapesCommunicationException(500);
 
         }
@@ -95,8 +93,8 @@ public class NotificationHandler {
         try{
             // No module file, it should be a configuration error
             if(!moduleFilePath.exists()){
-                GrapesPlugin.getLogger().log(Level.WARNING,"[GRAPES] Grapes Maven plugin report does not exist.");
-                GrapesPlugin.markAsSent(notification, build);
+                GrapesPlugin.getLogger().log(Level.WARNING, "[GRAPES] Grapes Maven plugin report does not exist.");
+                GrapesPlugin.getLogger().log(Level.WARNING, "[GRAPES] -> " + moduleFilePath.toURI().toString());
                 return;
             }
 
@@ -105,26 +103,15 @@ public class NotificationHandler {
                 final FilePath reportFile = GrapesPlugin.getBuildReportFile(build);
                 moduleFilePath.copyTo(reportFile);
             }
-        } catch (Exception e){
-            GrapesPlugin.getLogger().log(Level.SEVERE, "[GRAPES] An error occurred during module post preparation ", e);
-            throw new GrapesCommunicationException(500);
-        }
 
-        if(!client.isServerAvailable()){
-            GrapesPlugin.getLogger().log(Level.SEVERE, "[GRAPES] Grapes server is not available ");
-            throw new GrapesCommunicationException(404);
-        }
-
-        try{
             final Module module = GrapesPlugin.getModule(new File(String.valueOf(moduleFilePath)));
             final AbstractProject<?, ?> project = build.getParent();
 
             // Post the module
             client.postModule(module, user, password);
-            GrapesPlugin.markAsSent(notification, build);
 
             //discard old resend action if matches moduleName moduleVersion notification type
-            discardOldResend(notification, build);
+            discardOldResend(notification, build.getProject());
 
             // Generate build action with the dependency report
             final GrapesBuildAction buildAction = new GrapesBuildAction(module, client);
@@ -134,29 +121,70 @@ public class NotificationHandler {
             }
         } catch (Exception e){
             GrapesPlugin.getLogger().log(Level.SEVERE, "[GRAPES] An error occurred during module post ", e);
+            discardOldResend(notification, build.getProject());
+            saveNotification(notification, build);
             throw new GrapesCommunicationException(500);
         }
     }
 
     /**
-     * Discard old resend actions
+     * Serialize a resend action to be able to re-send the notification later
      *
      * @param notification GrapesNotification
-     * @param build AbstractBuild<?, ?>
+     * @param build AbstractBuild
      */
-    private void discardOldResend(final GrapesNotification notification, final AbstractBuild<?, ?> build) {
-        final ResendProjectAction resendProjectAction = GrapesPlugin.getAllResendActions(build.getProject());
+    private void saveNotification(final GrapesNotification notification, final AbstractBuild<?, ?> build) {
+        try{
 
-        if(resendProjectAction == null){
-            return;
+            final String serializedResend = JsonUtils.serialize(new ResendBuildAction(notification));
+            final File reportFolder = new File(GrapesPlugin.getBuildReportFolder(build).toURI());
+            FileUtils.serialize(reportFolder, serializedResend, getNotificationId(notification));
+        }catch (Exception e){
+            GrapesPlugin.getLogger().log(Level.SEVERE, "[GRAPES] Failed to serialized a resend action ", e);
         }
+    }
 
-        for(Map.Entry<AbstractBuild<?,?>, List<ResendBuildAction>> resendActionPerBuild: resendProjectAction.getResendActionPerBuild().entrySet()){
-            for(ResendBuildAction resendBuildAction: resendActionPerBuild.getValue()){
-                if(resendBuildAction.equals(notification)){
-                    GrapesPlugin.markAsSent(resendBuildAction, resendActionPerBuild.getKey());
+
+    /**
+     * Discard old resend actions
+     *  @param notification GrapesNotification
+     * @param project AbstractBuild<?, ?>
+     */
+    private void discardOldResend(final GrapesNotification notification, final AbstractProject<?, ?> project) {
+        try{
+            for(AbstractBuild<?,?> build : project.getBuilds()){
+                final File reportFolder = new File(GrapesPlugin.getBuildReportFolder(build).toURI());
+                final File notifFile = new File(reportFolder, getNotificationId(notification));
+
+                if(notifFile.exists()){
+                    notifFile.delete();
                 }
             }
+
+        }catch (Exception e){
+            GrapesPlugin.getLogger().log(Level.SEVERE, "[GRAPES] Failed to discard a resend action ", e);
         }
+    }
+
+
+    /**
+     * Generates an Id for a notification
+     *
+     * @param notification GrapesNotification
+     * @return String
+     */
+    private static String getNotificationId(final GrapesNotification notification) {
+        assert notification != null;
+
+        final StringBuilder sb = new StringBuilder();
+        sb.append('.');
+        sb.append(notification.getModuleName());
+        sb.append('-');
+        sb.append(notification.getModuleVersion());
+        sb.append('-');
+        sb.append(notification.getNotificationAction());
+        sb.append(TO_RESEND_SUFFIX);
+
+        return sb.toString();
     }
 }

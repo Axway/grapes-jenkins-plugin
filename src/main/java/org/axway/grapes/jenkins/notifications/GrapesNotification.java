@@ -38,14 +38,14 @@ public abstract class GrapesNotification implements Describable<GrapesNotificati
      *
      * @return String
      */
-    public abstract String moduleName();
+    public abstract String getModuleName();
 
     /**
      * Returns the module version that is targeted by the notification
      *
      * @return String
      */
-    public abstract String moduleVersion();
+    public abstract String getModuleVersion();
 
     public GrapesNotificationDescriptor getDescriptor() {
         return (GrapesNotificationDescriptor) Jenkins.getInstance().getDescriptorOrDie(getClass());
