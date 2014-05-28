@@ -5,18 +5,25 @@ import hudson.Plugin;
 import hudson.PluginWrapper;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.Action;
 import hudson.model.Hudson;
 import hudson.tasks.Publisher;
 import org.axway.grapes.commons.datamodel.Module;
 import org.axway.grapes.commons.utils.FileUtils;
 import org.axway.grapes.commons.utils.JsonUtils;
+import org.axway.grapes.jenkins.config.GrapesConfig;
 import org.axway.grapes.jenkins.notifications.GrapesNotification;
 import org.axway.grapes.jenkins.notifications.GrapesNotificationDescriptor;
+import org.axway.grapes.jenkins.resend.ResendBuildAction;
+import org.axway.grapes.jenkins.resend.ResendProjectAction;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
@@ -29,7 +36,9 @@ import java.util.logging.Logger;
  */
 public class GrapesPlugin extends Plugin {
 
-    public static final String REPORT_FILE = "grapesReports/module.json";
+    public static final String REPORT_FOLDER = "grapesReports";
+
+    public static final String REPORT_FILE = REPORT_FOLDER + "/module.json";
 
     public static final String GRAPES_WORKING_FOLDER = "grapes";
 
@@ -57,22 +66,34 @@ public class GrapesPlugin extends Plugin {
     }
 
     /**
-     * Provides build report file for Grapes archives
+     * Returns the build report folder for Grapes build archives
+     *
+     * @param build AbstractBuild
+     * @return FilePath
+     */
+    public static FilePath getBuildReportFolder(final AbstractBuild<?, ?> build) {
+        assert build != null;
+        final File reportFile = new File(build.getRootDir(), REPORT_FOLDER);
+        return  new FilePath(reportFile);
+    }
+
+    /**
+     * Returns the build report file for Grapes module reports
      *
      * @param build AbstractBuild
      * @return FilePath
      */
     public static FilePath getBuildReportFile(final AbstractBuild<?, ?> build) {
         assert build != null;
-        final File reportFolder = new File(build.getRootDir(), REPORT_FILE);
-        return  new FilePath(reportFolder);
+        final File reportFile = new File(build.getRootDir(), REPORT_FILE);
+        return  new FilePath(reportFile);
     }
 
     /**
      * Un-serialize a Module from Json file
      *
-     * @param moduleFile
-     * @return
+     * @param moduleFile File
+     * @return Module
      * @throws IOException
      * @throws InterruptedException
      */
@@ -87,14 +108,12 @@ public class GrapesPlugin extends Plugin {
 
 
     /**
-     * Returns the Grapes Notifier instance of the build (null if there is none)
+     * Returns the Grapes Notifier instance of a project (null if there is none)
      *
-     * @param build AbstractBuild<?, ?>
+     * @param project AbstractProject<?, ?>
      * @return GrapesNotifier
      */
-    public static GrapesNotifier getGrapesNotifier(final AbstractBuild<?, ?> build){
-        AbstractProject<?, ?> project = build.getProject();
-
+    public static GrapesNotifier getGrapesNotifier(final AbstractProject<?, ?> project){
         for(Publisher publisher : project.getPublishersList()){
             if(publisher instanceof GrapesNotifier){
                return (GrapesNotifier) publisher;
@@ -104,11 +123,23 @@ public class GrapesPlugin extends Plugin {
         return null;
     }
 
+
     /**
-     * Returns all the Grapes notifications of the build
+     * Returns the Grapes configuration of a project (null if there is none)
      *
-     * @param build
+     * @param project
      * @return
+     */
+    public static GrapesConfig getGrapesConfiguration(final AbstractProject<?, ?> project) {
+        final GrapesNotifier notifier = getGrapesNotifier(project);
+        return notifier == null ? null : notifier.getConfig();
+    }
+
+    /**
+     * Returns all the Grapes notifications of a build (never null, empty list if there is none)
+     *
+     * @param build AbstractBuild<?, ?>
+     * @return List<GrapesNotification>
      */
     public static List<GrapesNotification> getAllNotifications(final AbstractBuild<?, ?> build) {
         final List<GrapesNotification> notifications = new ArrayList<GrapesNotification>();
@@ -122,5 +153,101 @@ public class GrapesPlugin extends Plugin {
         }
 
         return notifications;
+    }
+
+    /**
+     * Returns all the Grapes resend action of the build (never null, empty list if there is none)
+     *
+     * @param build AbstractBuild<?, ?>
+     * @return List<ResendBuildAction
+     */
+    public static List<ResendBuildAction> getAllResendActions(final AbstractBuild<?, ?> build) {
+        final List<ResendBuildAction> resendActions = new ArrayList<ResendBuildAction>();
+
+        for(Action transientAction: build.getTransientActions()){
+
+            if(transientAction instanceof ResendBuildAction){
+                resendActions.add((ResendBuildAction)transientAction);
+            }
+        }
+
+        return resendActions;
+    }
+
+    /**
+     * Returns all the Grapes resend Action of a project (null if empty)
+     *
+     * @param project AbstractProject<?, ?>
+     * @return ResendProjectAction
+     */
+    public static ResendProjectAction getAllResendActions(final AbstractProject<?, ?> project) {
+        final List<ResendProjectAction> resendProjectActions = project.getActions(ResendProjectAction.class);
+
+        final GrapesConfig config = GrapesPlugin.getGrapesConfiguration(project);
+        final Map<AbstractBuild<?,?> , List<ResendBuildAction>> resendBuildActions = new HashMap<AbstractBuild<?, ?>, List<ResendBuildAction>>();
+        for(Object run : project.getBuilds()){
+            if(run instanceof AbstractBuild){
+                final AbstractBuild<?,?> build = (AbstractBuild)run;
+                resendBuildActions.put(build, GrapesPlugin.getAllResendActions(build));
+            }
+        }
+
+        if(!resendBuildActions.isEmpty() &&  config != null){
+            return new ResendProjectAction(resendBuildActions, config);
+        }
+
+        return null;
+    }
+
+    /**
+     * Add info in Grapes folder to mark the notification as sent notification
+     *
+     * @param notification GrapesNotification
+     * @param build AbstractBuild<?, ?>
+     */
+    public static void markAsSent(final GrapesNotification notification, final AbstractBuild<?, ?> build){
+        try{
+            final File reportFolder = new File(getBuildReportFolder(build).toURI());
+            FileUtils.touch(reportFolder, getNotificationId(notification));
+        }catch (Exception e){
+            GrapesPlugin.getLogger().log(Level.SEVERE, "[GRAPES] Failed to mark notification as sent: ", e);
+        }
+    }
+
+    /**
+     * Checks if a notification has been sent
+     *
+     * @param notification GrapesNotification
+     * @param build AbstractBuild<?, ?>
+     * @return boolean
+     */
+    public static boolean sent(final GrapesNotification notification, final AbstractBuild<?, ?> build){
+        try {
+            final File reportFolder = new File(getBuildReportFolder(build).toURI());
+
+            if(reportFolder.exists()){
+                final File sentFile = new File(reportFolder, getNotificationId(notification));
+                return sentFile.exists();
+            }
+        }catch (Exception e){
+            GrapesPlugin.getLogger().log(Level.SEVERE, "[GRAPES] Failed check is notification has been sent: ", e);
+        }
+
+        return false;
+    }
+
+    private static String getNotificationId(final GrapesNotification notification) {
+        assert notification != null;
+
+        final StringBuilder sb = new StringBuilder();
+        sb.append('.');
+        sb.append(notification.moduleName());
+        sb.append('-');
+        sb.append(notification.moduleVersion());
+        sb.append('-');
+        sb.append(notification.getNotificationAction());
+        sb.append("-sent");
+
+        return sb.toString();
     }
 }

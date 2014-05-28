@@ -2,13 +2,7 @@ package org.axway.grapes.jenkins.resend;
 
 import hudson.FilePath;
 import hudson.model.Action;
-import org.axway.grapes.commons.datamodel.Module;
-import org.axway.grapes.commons.utils.FileUtils;
-import org.axway.grapes.commons.utils.JsonUtils;
-import org.axway.grapes.jenkins.notifications.GrapesNotification.NotificationType;
-
-import java.io.File;
-import java.io.IOException;
+import org.axway.grapes.jenkins.notifications.GrapesNotification;
 
 /**
  * Resend Action
@@ -18,9 +12,7 @@ import java.io.IOException;
  *
  * @author jdcoffre
  */
-public class ResendBuildAction implements Action {
-
-    private static final String SENT_INFO_FILE = ".sent";
+public class ResendBuildAction extends GrapesNotification implements Action {
 
     private final FilePath reportPath;
     private final NotificationType action;
@@ -28,11 +20,31 @@ public class ResendBuildAction implements Action {
     private String moduleName;
     private String moduleVersion;
 
-    public ResendBuildAction(final NotificationType action, final FilePath reportPath, final String moduleName, final String moduleVersion) {
-        this.action = action;
-        this.reportPath = reportPath;
-        this.moduleName = moduleName;
-        this.moduleVersion = moduleVersion;
+    public ResendBuildAction(final GrapesNotification notification) {
+        this.action = notification.getNotificationAction();
+        this.reportPath = notification.getMimePath();
+        this.moduleName = notification.moduleName();
+        this.moduleVersion = notification.moduleVersion();
+    }
+
+    @Override
+    public NotificationType getNotificationAction() {
+        return action;
+    }
+
+    @Override
+    public FilePath getMimePath() {
+        return reportPath;
+    }
+
+    @Override
+    public String moduleName() {
+        return moduleName;
+    }
+
+    @Override
+    public String moduleVersion() {
+        return moduleVersion;
     }
 
     // Hide the build action
@@ -50,49 +62,15 @@ public class ResendBuildAction implements Action {
         return null;
     }
 
-    /**
-     * Provides the module file to resend
-     *
-     * @return Module
-     * @throws IOException
-     */
-    public Module getModule() throws IOException, InterruptedException {
-        final String serializedModule = FileUtils.read(new File(reportPath.toURI()));
-        return JsonUtils.unserializeModule(serializedModule);
-    }
+    @Override
+    public boolean equals(final Object obj){
+        if(obj instanceof GrapesNotification){
+            final GrapesNotification notification = (GrapesNotification)obj;
+            return moduleName.equals(notification.moduleName()) &&
+                    moduleVersion.equals(notification.moduleVersion()) &&
+                     action.equals(notification.getNotificationAction());
+        }
 
-    public String getModuleName() {
-        return moduleName;
-    }
-
-    public String getModuleVersion() {
-        return moduleVersion;
-    }
-
-    public NotificationType getNotificationType() {
-        return action;
-    }
-
-    /**
-     * Create a file .sent into Grapes report folder of the build to warn that the report does not need to be sent anymore
-     *
-     * @throws IOException
-     * @throws InterruptedException
-     */
-    public void discard() throws IOException, InterruptedException {
-        final File reportFolder = new File(reportPath.getParent().toURI());
-        FileUtils.touch(reportFolder, SENT_INFO_FILE);
-    }
-
-    /**
-     * Checks if the report has already been sent o not
-     *
-     * @return Boolean
-     */
-    public Boolean toSend() throws IOException, InterruptedException {
-        final File reportFolder = new File(reportPath.getParent().toURI());
-        final File sentInfoFile = new File(reportFolder, SENT_INFO_FILE);
-
-        return !sentInfoFile.exists();
+        return false;
     }
 }

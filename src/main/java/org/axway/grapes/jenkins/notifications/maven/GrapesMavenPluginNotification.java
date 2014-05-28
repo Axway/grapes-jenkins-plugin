@@ -64,7 +64,7 @@ public class GrapesMavenPluginNotification extends GrapesNotification {
         public GrapesNotification newAutoInstance(AbstractBuild<?, ?> build) {
             GrapesMavenPluginNotification notification = null;
             try{
-                final GrapesNotifier notifier = GrapesPlugin.getGrapesNotifier(build);
+                final GrapesNotifier notifier = GrapesPlugin.getGrapesNotifier(build.getProject());
                 if(notifier == null || !notifier.getManageGrapesMavenPlugin()){
                     return null;
                 }

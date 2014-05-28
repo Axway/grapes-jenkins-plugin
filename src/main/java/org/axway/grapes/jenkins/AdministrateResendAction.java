@@ -2,9 +2,11 @@ package org.axway.grapes.jenkins;
 
 import hudson.Extension;
 import hudson.maven.AbstractMavenProject;
+import hudson.model.AbstractBuild;
 import hudson.model.ManagementLink;
 import hudson.security.Permission;
 import jenkins.model.Jenkins;
+import org.axway.grapes.jenkins.resend.ResendBuildAction;
 import org.axway.grapes.jenkins.resend.ResendProjectAction;
 import org.kohsuke.stapler.HttpRedirect;
 import org.kohsuke.stapler.HttpResponse;
@@ -25,7 +27,7 @@ import java.util.logging.Level;
  * @author jdcoffre
  */
 @Extension
-public class AdministrateResendAction extends ManagementLink /*AdministrativeMonitor*/ {
+public class AdministrateResendAction extends ManagementLink {
 
     private static final String ROOT_ACTION_ICON = "img/resend-icon.png";
 
@@ -56,8 +58,7 @@ public class AdministrateResendAction extends ManagementLink /*AdministrativeMon
     public void refresh(){
         resendActions.clear();
         for(AbstractMavenProject mavenProject: Jenkins.getInstance().getAllItems(AbstractMavenProject.class)){
-            final ResendProjectAction resendProjectAction = mavenProject.getAction(ResendProjectAction.class);
-
+            final ResendProjectAction resendProjectAction = GrapesPlugin.getAllResendActions(mavenProject);
             if(resendProjectAction != null){
                 resendActions.add(resendProjectAction);
             }
@@ -92,9 +93,13 @@ public class AdministrateResendAction extends ManagementLink /*AdministrativeMon
 
         // TODO: display the progression
 
-        for(ResendProjectAction resendAction: resendActions){
+        for(ResendProjectAction resendProjectAction: resendActions){
             try {
-                resendAction.perform();
+                final NotificationHandler notifHandler = new NotificationHandler(resendProjectAction.getConfig());
+                for(Map.Entry<AbstractBuild<?,?>, List<ResendBuildAction>> resendBuildAction: resendProjectAction.getResendActionPerBuild().entrySet()){
+                    notifHandler.send(resendBuildAction.getKey(), resendBuildAction.getValue());
+                }
+
             } catch (Exception e ){
                 GrapesPlugin.getLogger().log(Level.SEVERE, "[GRAPES] Failed to re-send notification: ", e);
             }

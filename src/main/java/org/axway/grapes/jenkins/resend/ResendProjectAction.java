@@ -1,15 +1,13 @@
 package org.axway.grapes.jenkins.resend;
 
+import hudson.model.AbstractBuild;
 import hudson.model.Action;
-import org.axway.grapes.jenkins.GrapesPlugin;
 import org.axway.grapes.jenkins.config.GrapesConfig;
-import org.axway.grapes.utils.client.GrapesClient;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 
 /**
  * Resend Project Action
@@ -21,11 +19,11 @@ import java.util.logging.Level;
  */
 public class ResendProjectAction implements Action {
 
-    private final List<ResendBuildAction> resendBuildActions;
+    private final Map<AbstractBuild<?,?> , List<ResendBuildAction>> resendActionPerBuild;
     private final GrapesConfig config;
 
-    public ResendProjectAction(final List<ResendBuildAction> resendBuildActions, final GrapesConfig config) {
-        this.resendBuildActions = resendBuildActions;
+    public ResendProjectAction(final Map<AbstractBuild<?,?>, List<ResendBuildAction>> resendBuildActions, final GrapesConfig config) {
+        this.resendActionPerBuild = resendBuildActions;
         this.config = config;
     }
 
@@ -44,98 +42,12 @@ public class ResendProjectAction implements Action {
         return null;
     }
 
-    /**
-     * Mandatory trick. ResendProjectAction are updated at each build.
-     * If the notification has been resent by the admin panel, it will be taken into account only after the next time the build run.
-     * To avoid resending again and again the notification from the admin panel until the next build, we check that the reports have not been sent.
-     *
-     * @return List<ResendBuildAction>
-     */
-    public List<ResendBuildAction> getResendBuildActions() {
-        final List<ResendBuildAction> updatedActions = new ArrayList<ResendBuildAction>();
-        try {
-            for (ResendBuildAction action: resendBuildActions) {
-                if (action.toSend()) {
-                    updatedActions.add(action);
-                }
-            }
-        } catch (Exception e){
-            GrapesPlugin.getLogger().log(Level.INFO,"[GRAPES] Failed update resend action list: ", e);
-        }
-        resendBuildActions.clear();
-        resendBuildActions.addAll(updatedActions);
-
-        return resendBuildActions;
+    public GrapesConfig getConfig() {
+        return config;
     }
 
-    /**
-     * Re-launch all the notification to the configured server
-     */
-    public void perform() {
-        final GrapesClient client = new GrapesClient(config.getHost(), String.valueOf(config.getPort()));
-
-        if (client.isServerAvailable()) {
-            String user = null, password = null;
-
-            if (config.getPublisherCredentials() != null) {
-                user = config.getPublisherCredentials().getUsername();
-                password = config.getPublisherCredentials().getPassword();
-            }
-
-            for (ResendBuildAction resendAction : resendBuildActions) {
-                switch (resendAction.getNotificationType()){
-                    case POST_MODULE:
-                        sendModule(client, resendAction, user, password);
-                        break;
-
-                    case PROMOTE:
-                        promoteModule(client, resendAction, user, password);
-                        break;
-
-                    default:break;
-                }
-            }
-
-        }
-
-    }
-
-    /**
-     * Manage re-send module promotion
-     *
-     * @param client GrapesClient
-     * @param resendAction ResendBuildAction
-     * @param user String
-     * @param password String
-     */
-    private void promoteModule(final GrapesClient client, final ResendBuildAction resendAction, final String user, final String password) {
-        try {
-            client.promoteModule(resendAction.getModuleName(), resendAction.getModuleVersion(), user, password);
-            resendAction.discard();
-        } catch (Exception e) {
-            GrapesPlugin.getLogger().log(Level.SEVERE,
-                    "[GRAPES] Failed perform resend action of " + resendAction.getModuleName() +
-                            " in version " + resendAction.getModuleVersion(), e);
-        }
-    }
-
-    /**
-     * Manage re-send module on ResendBuildAction
-     *
-     * @param client GrapesClient
-     * @param resendAction ResendBuildAction
-     * @param user String
-     * @param password String
-     */
-    private void sendModule(final GrapesClient client, final ResendBuildAction resendAction, final String user, final String password) {
-        try {
-            client.postModule(resendAction.getModule(), user, password);
-            resendAction.discard();
-        } catch (Exception e) {
-            GrapesPlugin.getLogger().log(Level.SEVERE,
-                    "[GRAPES] Failed perform resend action of " + resendAction.getModuleName() +
-                            " in version " + resendAction.getModuleVersion(), e);
-        }
+    public Map<AbstractBuild<?,?> , List<ResendBuildAction>> getResendActionPerBuild() {
+        return resendActionPerBuild;
     }
 
     /**
@@ -144,10 +56,14 @@ public class ResendProjectAction implements Action {
      * @return Map<String, String>
      */
     public Map<String, String> getModulesInfo() {
-        final Map<String, String> modulesInfo = new HashMap<String, String>();
+        final List<ResendBuildAction> resendBuildActions = new ArrayList<ResendBuildAction>();
+        for(List<ResendBuildAction> buildActions: resendActionPerBuild.values()){
+            resendBuildActions.addAll(buildActions);
+        }
 
-        for(ResendBuildAction action: getResendBuildActions()){
-            modulesInfo.put(action.getModuleName(), action.getModuleVersion());
+        final Map<String, String> modulesInfo = new HashMap<String, String>();
+        for(ResendBuildAction action: resendBuildActions){
+            modulesInfo.put(action.moduleName(), action.moduleVersion());
         }
         return modulesInfo;
     }
