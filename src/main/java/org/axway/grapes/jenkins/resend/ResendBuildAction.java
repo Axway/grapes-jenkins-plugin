@@ -20,7 +20,7 @@ import org.axway.grapes.jenkins.resend.json.ResendBuildActionSerializer;
 @JsonDeserialize(using=ResendBuildActionDeserializer.class)
 public class ResendBuildAction extends GrapesNotification implements Action {
 
-    private final FilePath mimePath;
+    private FilePath mimePath;
     private final NotificationType notificationAction;
 
     private final String moduleName;
@@ -48,6 +48,11 @@ public class ResendBuildAction extends GrapesNotification implements Action {
     @Override
     public FilePath getMimePath() {
         return mimePath;
+    }
+
+    @Override
+    public void setMimePath(final FilePath reportFile) {
+        this.mimePath = reportFile;
     }
 
     @Override

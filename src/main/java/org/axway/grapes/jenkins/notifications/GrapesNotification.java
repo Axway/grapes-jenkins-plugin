@@ -34,6 +34,14 @@ public abstract class GrapesNotification implements Describable<GrapesNotificati
     public abstract FilePath getMimePath();
 
     /**
+     * Sets the mimePath
+     * <p>Required to update the mime after it has been backed-up in build folder</p>
+     *
+     * @param reportFile FilePath
+     */
+    public abstract void setMimePath(final FilePath reportFile);
+
+    /**
      * Returns the module name that is targeted by the notification
      *
      * @return String

@@ -102,6 +102,7 @@ public class NotificationHandler {
             if(build.isBuilding()){
                 final FilePath reportFile = GrapesPlugin.getBuildReportFile(build);
                 moduleFilePath.copyTo(reportFile);
+                notification.setMimePath(reportFile);
             }
 
             final Module module = GrapesPlugin.getModule(new File(String.valueOf(moduleFilePath)));

@@ -36,6 +36,11 @@ public class GrapesMavenPluginNotification extends GrapesNotification {
     }
 
     @Override
+    public void setMimePath(final FilePath reportFile) {
+        this.moduleFilePath = reportFile;
+    }
+
+    @Override
     public String getModuleName() {
         return moduleName;
     }

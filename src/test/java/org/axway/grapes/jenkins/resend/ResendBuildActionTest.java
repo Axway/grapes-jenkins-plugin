@@ -3,7 +3,6 @@ package org.axway.grapes.jenkins.resend;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hudson.FilePath;
-import org.axway.grapes.commons.utils.FileUtils;
 import org.axway.grapes.commons.utils.JsonUtils;
 import org.axway.grapes.jenkins.notifications.GrapesNotification;
 import org.junit.Test;
