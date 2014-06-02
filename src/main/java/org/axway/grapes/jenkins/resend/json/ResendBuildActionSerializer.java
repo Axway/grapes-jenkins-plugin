@@ -20,12 +20,20 @@ public class ResendBuildActionSerializer extends JsonSerializer<ResendBuildActio
     public void serialize(final ResendBuildAction resendBuildAction, final JsonGenerator jsonGenerator, final SerializerProvider serializerProvider) throws IOException, JsonProcessingException {
         try{
             jsonGenerator.writeStartObject();
-            jsonGenerator.writeStringField("mimePath", resendBuildAction.getMimePath().toURI().getPath());
-            jsonGenerator.writeStringField("notificationAction", resendBuildAction.getNotificationAction().name());
+
+            if(resendBuildAction.getMimePath() != null){
+                jsonGenerator.writeStringField("mimePath", resendBuildAction.getMimePath().toURI().getPath());
+            }
+
+            if(resendBuildAction.getNotificationAction() != null){
+                jsonGenerator.writeStringField("notificationAction", resendBuildAction.getNotificationAction().name());
+            }
+
             jsonGenerator.writeStringField("moduleName", resendBuildAction.getModuleName());
             jsonGenerator.writeStringField("moduleVersion", resendBuildAction.getModuleVersion());
             jsonGenerator.writeEndObject();
             jsonGenerator.flush();
+
         }catch (Exception e){
             GrapesPlugin.getLogger().log(Level.SEVERE, "[GRAPES] Failed to serialized a resend action ", e);
         }

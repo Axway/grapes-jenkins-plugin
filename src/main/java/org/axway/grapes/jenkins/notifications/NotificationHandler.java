@@ -94,7 +94,7 @@ public class NotificationHandler {
             // No module file, it should be a configuration error
             if(!moduleFilePath.exists()){
                 GrapesPlugin.getLogger().log(Level.WARNING, "[GRAPES] Grapes Maven plugin report does not exist.");
-                GrapesPlugin.getLogger().log(Level.WARNING, "[GRAPES] -> " + moduleFilePath.toURI().toString());
+                GrapesPlugin.getLogger().log(Level.WARNING, "[GRAPES] |-> " + moduleFilePath.toURI().toString());
                 return;
             }
 

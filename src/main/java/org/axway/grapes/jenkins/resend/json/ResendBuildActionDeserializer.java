@@ -26,11 +26,21 @@ public class ResendBuildActionDeserializer extends JsonDeserializer<ResendBuildA
         final ObjectCodec oc = jsonParser.getCodec();
         final JsonNode node = oc.readTree(jsonParser);
 
-        final String mimePath = node.get("mimePath").asText();
+        FilePath mimePath = null;
+        if(node.get("mimePath") != null){
+            final String serializedMimePath = node.get("mimePath").asText();
+            mimePath = new FilePath(new File(serializedMimePath));
+        }
+
         final String notificationAction = node.get("notificationAction").asText();
         final String moduleName = node.get("moduleName").asText();
         final String moduleVersion = node.get("moduleVersion").asText();
 
-        return new ResendBuildAction(GrapesNotification.NotificationType.valueOf(notificationAction),new FilePath(new File(mimePath)), moduleName, moduleVersion);
+        if(mimePath == null){
+            return new ResendBuildAction(GrapesNotification.NotificationType.valueOf(notificationAction),mimePath , moduleName, moduleVersion);
+        }
+
+        return new ResendBuildAction(GrapesNotification.NotificationType.valueOf(notificationAction),mimePath, moduleName, moduleVersion);
+
     }
 }
