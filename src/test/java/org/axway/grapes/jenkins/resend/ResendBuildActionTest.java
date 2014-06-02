@@ -35,4 +35,25 @@ public class ResendBuildActionTest {
         assertNull(execution);
 
     }
+
+    @Test
+    public void checkResendBuildActionJsonSerializationWhilePathIsNull(){
+        final ResendBuildAction resendBuildAction = new ResendBuildAction(GrapesNotification.NotificationType.POST_MODULE, null, "moduleName", "moduleVersion");
+
+        Exception execution = null;
+
+        try{
+            final String serializedAction = JsonUtils.serialize(resendBuildAction);
+            final ObjectMapper mapper = new ObjectMapper();
+            mapper.disable(MapperFeature.USE_GETTERS_AS_SETTERS);
+            final ResendBuildAction newResendBuildAction = mapper.readValue(serializedAction,ResendBuildAction.class);
+
+            assertEquals(resendBuildAction, newResendBuildAction);
+        }catch (Exception e){
+            execution = e;
+        }
+
+        assertNull(execution);
+
+    }
 }

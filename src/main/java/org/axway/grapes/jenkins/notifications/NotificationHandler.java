@@ -134,14 +134,37 @@ public class NotificationHandler {
      * @param build AbstractBuild
      */
     private void saveNotification(final GrapesNotification notification, final AbstractBuild<?, ?> build) {
+        final ResendBuildAction resendAction = new ResendBuildAction(notification);
+
+        // Check if the notification is valid before serializing it
+        if(!isValid(resendAction)){
+            GrapesPlugin.getLogger().log(Level.SEVERE, "[GRAPES] Malformed Grapes Notification: Grapes plugin is trying to serialize a notification provided by another plugin but failed to resolve the notification.");
+            return;
+        }
+
         try{
 
-            final String serializedResend = JsonUtils.serialize(new ResendBuildAction(notification));
+            final String serializedResend = JsonUtils.serialize(resendAction);
             final File reportFolder = new File(GrapesPlugin.getBuildReportFolder(build).toURI());
             FileUtils.serialize(reportFolder, serializedResend, getNotificationId(notification));
         }catch (Exception e){
             GrapesPlugin.getLogger().log(Level.SEVERE, "[GRAPES] Failed to serialized a resend action ", e);
         }
+    }
+
+    /**
+     * Checks if a notification is valid
+     *
+     * @param resendAction ResendBuildAction
+     * @return boolean
+     */
+    private boolean isValid(final ResendBuildAction resendAction) {
+        if(resendAction.getModuleVersion() == null ||
+              resendAction.getModuleName() == null ||
+                 resendAction.getNotificationAction() == null ){
+            return false;
+        }
+        return true;
     }
 
 
