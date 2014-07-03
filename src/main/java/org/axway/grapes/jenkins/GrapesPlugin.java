@@ -7,15 +7,15 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Hudson;
 import hudson.tasks.Publisher;
-import org.axway.grapes.commons.datamodel.Module;
-import org.axway.grapes.commons.utils.FileUtils;
-import org.axway.grapes.commons.utils.JsonUtils;
-import org.axway.grapes.jenkins.config.GrapesConfig;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
+
+import org.axway.grapes.commons.datamodel.Module;
+import org.axway.grapes.commons.utils.JsonUtils;
+import org.axway.grapes.jenkins.config.GrapesConfig;
 
 /**
  * Placeholder for plugin entry point.
@@ -87,9 +87,9 @@ public class GrapesPlugin extends Plugin {
      * @throws IOException
      * @throws InterruptedException
      */
-    public static Module getModule(final File moduleFile) throws IOException, InterruptedException {
+    public static Module getModule(final FilePath moduleFile) throws IOException, InterruptedException {
         if (moduleFile.exists()) {
-            final String serializedModule= FileUtils.read(moduleFile);
+        	final String serializedModule= moduleFile.readToString();
             return JsonUtils.unserializeModule(serializedModule);
         }
 

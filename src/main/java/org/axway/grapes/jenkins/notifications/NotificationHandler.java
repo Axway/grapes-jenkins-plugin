@@ -105,7 +105,7 @@ public class NotificationHandler {
                 notification.setMimePath(reportFile);
             }
 
-            final Module module = GrapesPlugin.getModule(new File(String.valueOf(moduleFilePath)));
+            final Module module = GrapesPlugin.getModule(moduleFilePath);
             final AbstractProject<?, ?> project = build.getParent();
 
             // Post the module
