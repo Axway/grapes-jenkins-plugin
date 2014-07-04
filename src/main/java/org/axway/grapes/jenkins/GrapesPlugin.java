@@ -92,7 +92,8 @@ public class GrapesPlugin extends Plugin {
             return JsonUtils.unserializeModule(serializedModule);
         }
 
-        return null;
+        getLogger().severe("[GRAPES] Wrong module report path: " + moduleFile.toURI().getPath());
+        throw new IOException("[GRAPES] Failed to get report.");
     }
 
 
