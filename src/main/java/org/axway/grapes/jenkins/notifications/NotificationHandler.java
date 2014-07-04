@@ -106,7 +106,6 @@ public class NotificationHandler {
             }
 
             final Module module = GrapesPlugin.getModule(moduleFilePath);
-            final AbstractProject<?, ?> project = build.getParent();
 
             // Post the module
             client.postModule(module, user, password);

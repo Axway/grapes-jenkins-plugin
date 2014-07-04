@@ -7,15 +7,14 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Hudson;
 import hudson.tasks.Publisher;
+import org.axway.grapes.commons.datamodel.Module;
+import org.axway.grapes.commons.utils.JsonUtils;
+import org.axway.grapes.jenkins.config.GrapesConfig;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
-
-import org.axway.grapes.commons.datamodel.Module;
-import org.axway.grapes.commons.utils.JsonUtils;
-import org.axway.grapes.jenkins.config.GrapesConfig;
 
 /**
  * Placeholder for plugin entry point.

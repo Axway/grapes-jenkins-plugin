@@ -1,7 +1,6 @@
 package org.axway.grapes.jenkins.resend.json;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import org.axway.grapes.jenkins.GrapesPlugin;
@@ -17,7 +16,7 @@ import java.util.logging.Level;
  */
 public class ResendBuildActionSerializer extends JsonSerializer<ResendBuildAction> {
     @Override
-    public void serialize(final ResendBuildAction resendBuildAction, final JsonGenerator jsonGenerator, final SerializerProvider serializerProvider) throws IOException, JsonProcessingException {
+    public void serialize(final ResendBuildAction resendBuildAction, final JsonGenerator jsonGenerator, final SerializerProvider serializerProvider) throws IOException {
         try{
             jsonGenerator.writeStartObject();
 
