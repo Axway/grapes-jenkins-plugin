@@ -3,14 +3,14 @@ package org.axway.grapes.jenkins.notifications.maven;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.model.AbstractBuild;
+
+import java.util.logging.Level;
+
 import org.axway.grapes.commons.datamodel.Module;
-import org.axway.grapes.jenkins.GrapesNotifier;
 import org.axway.grapes.jenkins.GrapesPlugin;
+import org.axway.grapes.jenkins.GrapesNotifier;
 import org.axway.grapes.jenkins.notifications.GrapesNotification;
 import org.axway.grapes.jenkins.notifications.GrapesNotificationDescriptor;
-
-import java.io.File;
-import java.util.logging.Level;
 
 /**
  * Grapes Maven plugin Notification
@@ -79,7 +79,7 @@ public class GrapesMavenPluginNotification extends GrapesNotification {
                     return null;
                 }
 
-                final Module module = GrapesPlugin.getModule(new File(String.valueOf(moduleFilePath)));
+                final Module module = GrapesPlugin.getModule(moduleFilePath);
 
                 notification = new GrapesMavenPluginNotification();
                 notification.setModuleName(module.getName());
