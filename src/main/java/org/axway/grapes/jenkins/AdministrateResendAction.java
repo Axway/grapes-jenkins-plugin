@@ -140,8 +140,6 @@ public class AdministrateResendAction extends ManagementLink {
      * @return ResendProjectAction
      */
     private ResendProjectAction getAllResendActions(final AbstractProject<?, ?> project) {
-        final List<ResendProjectAction> resendProjectActions = project.getActions(ResendProjectAction.class);
-
         final GrapesConfig config = GrapesPlugin.getGrapesConfiguration(project);
         final Map<AbstractBuild<?,?> , List<ResendBuildAction>> resendBuildActions = new HashMap<AbstractBuild<?, ?>, List<ResendBuildAction>>();
         for(Object run : project.getBuilds()){

@@ -3,7 +3,7 @@
 
     <groupId>org.axway.grapes</groupId>
     <artifactId>grapes-jenkins-plugin</artifactId>
-    <version>1.2.1-SNAPSHOT</version>
+    <version>1.2.2-SNAPSHOT</version>
     <packaging>hpi</packaging>
 
     <name>Grapes Jenkins plugin</name>

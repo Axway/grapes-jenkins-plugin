@@ -83,8 +83,6 @@ public class GrapesNotifier extends Notifier {
         }
 
         final PrintStream logger = listener.getLogger();
-        final AbstractProject<?, ?> project = build.getParent();
-
         final GrapesConfig config = getConfig();
 
 

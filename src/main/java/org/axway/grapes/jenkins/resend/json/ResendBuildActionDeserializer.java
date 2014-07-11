@@ -2,7 +2,6 @@ package org.axway.grapes.jenkins.resend.json;
 
 
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
@@ -21,7 +20,7 @@ import java.io.IOException;
  */
 public class ResendBuildActionDeserializer extends JsonDeserializer<ResendBuildAction> {
     @Override
-    public ResendBuildAction deserialize(final JsonParser jsonParser, final DeserializationContext deserializationContext) throws IOException, JsonProcessingException {
+    public ResendBuildAction deserialize(final JsonParser jsonParser, final DeserializationContext deserializationContext) throws IOException {
 
         final ObjectCodec oc = jsonParser.getCodec();
         final JsonNode node = oc.readTree(jsonParser);

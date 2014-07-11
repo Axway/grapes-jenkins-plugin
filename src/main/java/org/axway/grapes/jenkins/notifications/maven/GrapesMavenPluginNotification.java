@@ -9,7 +9,6 @@ import org.axway.grapes.jenkins.GrapesPlugin;
 import org.axway.grapes.jenkins.notifications.GrapesNotification;
 import org.axway.grapes.jenkins.notifications.GrapesNotificationDescriptor;
 
-import java.io.File;
 import java.util.logging.Level;
 
 /**
@@ -79,7 +78,7 @@ public class GrapesMavenPluginNotification extends GrapesNotification {
                     return null;
                 }
 
-                final Module module = GrapesPlugin.getModule(new File(String.valueOf(moduleFilePath)));
+                final Module module = GrapesPlugin.getModule(moduleFilePath);
 
                 notification = new GrapesMavenPluginNotification();
                 notification.setModuleName(module.getName());

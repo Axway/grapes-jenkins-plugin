@@ -8,7 +8,6 @@ import hudson.model.AbstractProject;
 import hudson.model.Hudson;
 import hudson.tasks.Publisher;
 import org.axway.grapes.commons.datamodel.Module;
-import org.axway.grapes.commons.utils.FileUtils;
 import org.axway.grapes.commons.utils.JsonUtils;
 import org.axway.grapes.jenkins.config.GrapesConfig;
 
@@ -87,13 +86,14 @@ public class GrapesPlugin extends Plugin {
      * @throws IOException
      * @throws InterruptedException
      */
-    public static Module getModule(final File moduleFile) throws IOException, InterruptedException {
+    public static Module getModule(final FilePath moduleFile) throws IOException, InterruptedException {
         if (moduleFile.exists()) {
-            final String serializedModule= FileUtils.read(moduleFile);
+        	final String serializedModule= moduleFile.readToString();
             return JsonUtils.unserializeModule(serializedModule);
         }
 
-        return null;
+        getLogger().severe("[GRAPES] Wrong module report path: " + moduleFile.toURI().getPath());
+        throw new IOException("[GRAPES] Failed to get report.");
     }
 
 

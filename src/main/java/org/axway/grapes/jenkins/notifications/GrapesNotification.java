@@ -16,7 +16,7 @@ import jenkins.model.Jenkins;
  */
 public abstract class GrapesNotification implements Describable<GrapesNotification>, ExtensionPoint {
 
-    public static enum NotificationType {POST_MODULE, PROMOTE};
+    public static enum NotificationType {POST_MODULE, PROMOTE}
 
     /**
      * Returns the kind of notification the Grapes Jenkins notifier should perform
