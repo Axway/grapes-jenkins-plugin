@@ -7,7 +7,7 @@
     <packaging>hpi</packaging>
 
     <name>Grapes Jenkins plugin</name>
-    <description>Jenkins plugin to plug Grapes to your CI</description>
+    <description>Plug your CI to Grapes (compatible Grapes 1.4.0 and higher)</description>
     <url>https://github.com/Axway/grapes-jenkins-plugin</url>
 
     <parent>
@@ -18,7 +18,8 @@
 
     <properties>
         <maven.version>3.0.5</maven.version>
-	    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <grapes.version>1.4.0-SNAPSHOT</grapes.version>
     </properties>
 
     <scm>
@@ -57,13 +58,13 @@
         <dependency>
             <groupId>org.axway.grapes</groupId>
             <artifactId>grapes-commons</artifactId>
-            <version>1.3.0</version>
+            <version>${grapes.version}</version>
             <type>jar</type>
         </dependency>
         <dependency>
             <groupId>org.axway.grapes</groupId>
             <artifactId>grapes-utils</artifactId>
-            <version>1.3.0</version>
+            <version>${grapes.version}</version>
             <type>jar</type>
         </dependency>
         <dependency>

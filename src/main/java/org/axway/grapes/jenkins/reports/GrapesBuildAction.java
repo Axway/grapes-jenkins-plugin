@@ -4,6 +4,7 @@ import hudson.model.Action;
 import org.axway.grapes.commons.datamodel.Artifact;
 import org.axway.grapes.commons.datamodel.Dependency;
 import org.axway.grapes.commons.datamodel.Module;
+import org.axway.grapes.commons.datamodel.Organization;
 import org.axway.grapes.commons.utils.ModuleUtils;
 import org.axway.grapes.jenkins.GrapesPlugin;
 import org.axway.grapes.utils.client.GrapesClient;
@@ -64,7 +65,8 @@ public class GrapesBuildAction implements Action {
 
         // Init the report with Grapes server information
         try{
-            final List<String> corporateFilters = grapesClient.getCorporateFilters();
+            final Organization organization = grapesClient.getModuleOrganization(module.getName(), module.getVersion());
+            final List<String> corporateFilters = organization.getCorporateGroupIdPrefixes();
             dependencies = new HashMap<Dependency, String>();
 
             final List<Dependency> moduleDependencies = ModuleUtils.getCorporateDependencies(module, corporateFilters);

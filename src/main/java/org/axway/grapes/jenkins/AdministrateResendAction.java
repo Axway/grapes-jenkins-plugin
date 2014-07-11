@@ -118,7 +118,7 @@ public class AdministrateResendAction extends ManagementLink {
      * Returns all the Grapes resend action of the build (never null, empty list if there is none)
      *
      * @param build AbstractBuild<?, ?>
-     * @return List<ResendBuildAction
+     * @return List<ResendBuildAction>
      */
     private List<ResendBuildAction> getAllResendActions(final AbstractBuild<?, ?> build) {
         final List<ResendBuildAction> resendActions = new ArrayList<ResendBuildAction>();
