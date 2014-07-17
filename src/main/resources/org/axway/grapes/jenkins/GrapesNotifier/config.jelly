@@ -28,4 +28,10 @@
         <f:checkbox checked="${manageGrapesMavenPlugin}"/>
     </f:entry>
 
+
+
+    <f:entry title="${%Publish module's build info}" field="manageBuildInfo">
+        <f:checkbox checked="${manageBuildInfo}"/>
+    </f:entry>
+
 </j:jelly>

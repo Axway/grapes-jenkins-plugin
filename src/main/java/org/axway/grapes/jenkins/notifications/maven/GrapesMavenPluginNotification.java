@@ -73,7 +73,7 @@ public class GrapesMavenPluginNotification extends GrapesNotification {
                     return null;
                 }
 
-                final FilePath moduleFilePath = getModuleFilePath(build);
+                final FilePath moduleFilePath = GrapesPlugin.getBuildModuleFile(build);
                 if(!moduleFilePath.exists()){
                     return null;
                 }
@@ -89,25 +89,6 @@ public class GrapesMavenPluginNotification extends GrapesNotification {
             }
 
             return notification;
-        }
-
-        /**
-         * Returns the location of Grapes module file
-         *
-         * @param build AbstractBuild<?, ?>
-         * @return FilePath
-         */
-        private FilePath getModuleFilePath(final AbstractBuild<?, ?> build) {
-            // If the build is running the module file is in the workspace
-            if(build.isBuilding()){
-                // Use root module in stead of Workspace dir in case of custom checkout
-                final FilePath moduleRoot = build.getModuleRoot();
-                return moduleRoot.child("target/" + GrapesPlugin.GRAPES_WORKING_FOLDER + "/" + GrapesPlugin.GRAPES_MODULE_FILE);
-            }
-
-            // Otherwise the notification has been saved into the build folder
-            return GrapesPlugin.getBuildReportFile(build);
-
         }
     }
 }

@@ -15,6 +15,7 @@ import org.axway.grapes.utils.client.GrapesCommunicationException;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 
 /**
@@ -62,68 +63,44 @@ public class NotificationHandler {
      * @throws GrapesCommunicationException
      */
     public void send(final GrapesNotification notification, final AbstractBuild<?,?> build) throws GrapesCommunicationException {
-        switch (notification.getNotificationAction()){
-            case POST_MODULE: postModule(notification, build);
-                break;
-            case PROMOTE: promoteModule(notification, build);
-                break;
-            default:break;
-        }
-    }
-
-    private void promoteModule(final GrapesNotification notification, final AbstractBuild<?, ?> build) throws GrapesCommunicationException {
-        try {
-            client.promoteModule(notification.getModuleName(), notification.getModuleVersion(), user, password);
-
-            //discard old resend action if matches moduleName moduleVersion notification type
-            discardOldResend(notification, build.getProject());
-
-        } catch (Exception e) {
-            GrapesPlugin.getLogger().log(Level.SEVERE, "[GRAPES] An error occurred during module promotion ", e);
-            discardOldResend(notification, build.getProject());
-            saveNotification(notification, build);
-            throw new GrapesCommunicationException(500);
-
-        }
-    }
-
-    private void postModule(final GrapesNotification notification, final AbstractBuild<?, ?> build) throws GrapesCommunicationException {
-        final FilePath moduleFilePath = notification.getMimePath();
-
         try{
-            // No module file, it should be a configuration error
-            if(!moduleFilePath.exists()){
-                GrapesPlugin.getLogger().log(Level.WARNING, "[GRAPES] Grapes Maven plugin report does not exist.");
-                GrapesPlugin.getLogger().log(Level.WARNING, "[GRAPES] |-> " + moduleFilePath.toURI().toString());
-                return;
+            // perform the notification
+            switch (notification.getNotificationAction()){
+                case POST_MODULE:
+                    // Send the module
+                    final FilePath moduleFilePath = notification.getMimePath();
+                    final Module module = GrapesPlugin.getModule(moduleFilePath);
+                    client.postModule(module, user, password);
+
+                    // Generate build action with the dependency report
+                    final GrapesBuildAction buildAction = new GrapesBuildAction(module, client);
+
+                    // Add dependency report to the build
+                    if (buildAction.isInitOk()) {
+                        build.addAction(buildAction);
+                    }
+                    break;
+                case PROMOTE:
+                    client.promoteModule(notification.getModuleName(), notification.getModuleVersion(), user, password);
+                    break;
+                case POST_MODULE_BUILD_INFO:
+                    final FilePath buildInfoPath = notification.getMimePath();
+                    final Map<String, String> buildInfo = GrapesPlugin.getBuildInfo(buildInfoPath);
+                    client.postBuildInfo(notification.getModuleName(), notification.getModuleVersion(), buildInfo, user, password);
+                    break;
+                default:break;
             }
-
-            // Keep the Json file in the build history
-            if(build.isBuilding()){
-                final FilePath reportFile = GrapesPlugin.getBuildReportFile(build);
-                moduleFilePath.copyTo(reportFile);
-                notification.setMimePath(reportFile);
-            }
-
-            final Module module = GrapesPlugin.getModule(moduleFilePath);
-
-            // Post the module
-            client.postModule(module, user, password);
 
             //discard old resend action if matches moduleName moduleVersion notification type
             discardOldResend(notification, build.getProject());
+        }
 
-            // Generate build action with the dependency report
-            final GrapesBuildAction buildAction = new GrapesBuildAction(module, client);
-
-            if (buildAction.isInitOk()) {
-                build.addAction(buildAction);
-            }
-        } catch (Exception e){
-            GrapesPlugin.getLogger().log(Level.SEVERE, "[GRAPES] An error occurred during module post ", e);
+        catch (Exception e) {
+            GrapesPlugin.getLogger().log(Level.SEVERE, "[GRAPES] An error occurred during notification sending ", e);
             discardOldResend(notification, build.getProject());
             saveNotification(notification, build);
-            throw new GrapesCommunicationException(500);
+            throw new GrapesCommunicationException(e.getMessage(), 500);
+
         }
     }
 
@@ -143,7 +120,6 @@ public class NotificationHandler {
         }
 
         try{
-
             final String serializedResend = JsonUtils.serialize(resendAction);
             final File reportFolder = new File(GrapesPlugin.getBuildReportFolder(build).toURI());
             FileUtils.serialize(reportFolder, serializedResend, getNotificationId(notification));

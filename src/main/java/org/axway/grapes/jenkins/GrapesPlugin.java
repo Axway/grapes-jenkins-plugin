@@ -13,6 +13,7 @@ import org.axway.grapes.jenkins.config.GrapesConfig;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
@@ -27,7 +28,35 @@ public class GrapesPlugin extends Plugin {
 
     public static final String REPORT_FOLDER = "grapesReports";
 
-    public static final String REPORT_FILE = REPORT_FOLDER + "/module.json";
+    public static final String MODULE_REPORT_FILE = "module.json";
+
+    public static final String BUILD_INFO_REPORT_FILE = "buildInfo.json";
+
+    public static final String BUILD_INFO_SCM_TYPE = "scm-type";
+
+    public static final String BUILD_INFO_SCM_URL = "scm-url";
+
+    public static final String BUILD_INFO_SCM_REVISION = "scm-revision";
+
+    public static final String BUILD_INFO_JENKINS_HOST = "jenkins-host";
+
+    public static final String BUILD_INFO_JENKINS_NODE = "jenkins-node";
+
+    public static final String BUILD_INFO_JENKINS_JOB_URL = "jenkins-job-url";
+
+    public static final String BUILD_INFO_MAVEN_VERSION = "maven-version";
+
+    public static final String BUILD_INFO_MAVEN_GOAL = "maven-goal";
+
+    public static final String BUILD_INFO_MAVEN_OPTS = "maven-options";
+
+    public static final String BUILD_INFO_JAVA_HOME = "java-home";
+
+    public static final String BUILD_INFO_BUILD_DATE = "build-date";
+
+    public static final String BUILD_INFO_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssz";
+
+    public static final String BUILD_INFO_DATE_TIME_ZONE = "GMT";
 
     public static final String GRAPES_WORKING_FOLDER = "grapes";
 
@@ -67,15 +96,25 @@ public class GrapesPlugin extends Plugin {
     }
 
     /**
-     * Returns the build report file for Grapes module reports
+     * Returns the module build report file path
      *
      * @param build AbstractBuild
      * @return FilePath
      */
-    public static FilePath getBuildReportFile(final AbstractBuild<?, ?> build) {
-        assert build != null;
-        final File reportFile = new File(build.getRootDir(), REPORT_FILE);
-        return  new FilePath(reportFile);
+    public static FilePath getBuildModuleFile(final AbstractBuild<?, ?> build) {
+        final FilePath reportFolder = getBuildReportFolder(build);
+        return reportFolder.child(MODULE_REPORT_FILE);
+    }
+
+    /**
+     * Returns the buildInfo build report file path
+     *
+     * @param build AbstractBuild
+     * @return FilePath
+     */
+    public static FilePath getBuildBuildInfoFile(final AbstractBuild<?, ?> build) {
+        final FilePath reportFolder = getBuildReportFolder(build);
+        return reportFolder.child(BUILD_INFO_REPORT_FILE);
     }
 
     /**
@@ -88,12 +127,30 @@ public class GrapesPlugin extends Plugin {
      */
     public static Module getModule(final FilePath moduleFile) throws IOException, InterruptedException {
         if (moduleFile.exists()) {
-        	final String serializedModule= moduleFile.readToString();
+            final String serializedModule= moduleFile.readToString();
             return JsonUtils.unserializeModule(serializedModule);
         }
 
         getLogger().severe("[GRAPES] Wrong module report path: " + moduleFile.toURI().getPath());
         throw new IOException("[GRAPES] Failed to get report.");
+    }
+
+    /**
+     * Un-serialize a BuildInfo from Json file
+     *
+     * @param buildInfoFile File
+     * @return Map<String,String>
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public static Map<String,String> getBuildInfo(final FilePath buildInfoFile) throws IOException, InterruptedException {
+        if (buildInfoFile.exists()) {
+            final String serializedBuildInfo= buildInfoFile.readToString();
+            return JsonUtils.unserializeBuildInfo(serializedBuildInfo);
+        }
+
+        getLogger().severe("[GRAPES] Wrong buildInfo path: " + buildInfoFile.toURI().getPath());
+        throw new IOException("[GRAPES] Failed to get build info.");
     }
 
 

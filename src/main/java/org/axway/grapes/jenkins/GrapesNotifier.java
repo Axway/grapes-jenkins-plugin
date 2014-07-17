@@ -1,13 +1,12 @@
 package org.axway.grapes.jenkins;
 
 
+import hudson.EnvVars;
 import hudson.Extension;
+import hudson.FilePath;
 import hudson.Launcher;
 import hudson.maven.AbstractMavenProject;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.BuildListener;
-import hudson.model.Result;
+import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
@@ -15,18 +14,23 @@ import hudson.tasks.Publisher;
 import hudson.util.FormValidation;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
+import org.axway.grapes.commons.utils.JsonUtils;
 import org.axway.grapes.jenkins.config.GrapesConfig;
 import org.axway.grapes.jenkins.notifications.GrapesNotification;
 import org.axway.grapes.jenkins.notifications.GrapesNotificationDescriptor;
 import org.axway.grapes.jenkins.notifications.NotificationHandler;
+import org.axway.grapes.jenkins.notifications.buildinfo.BuildInfoNotification;
 import org.axway.grapes.utils.client.GrapesClient;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
 
 /**
  * Grapes Notifier
@@ -44,15 +48,23 @@ public class GrapesNotifier extends Notifier {
     // Manage the reports of Grapes Maven plugin
     public Boolean manageGrapesMavenPlugin = false;
 
+    // Manage the Build info
+    public Boolean manageBuildInfo = false;
+
     public Boolean getManageGrapesMavenPlugin() {
         return manageGrapesMavenPlugin;
     }
 
+    public Boolean getManageBuildInfo() {
+        return manageBuildInfo;
+    }
+
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
-    public GrapesNotifier(final String configName, final boolean manageGrapesMavenPlugin) {
+    public GrapesNotifier(final String configName, final boolean manageGrapesMavenPlugin, final boolean manageBuildInfo) {
         this.configName = configName;
         this.manageGrapesMavenPlugin = manageGrapesMavenPlugin;
+        this.manageBuildInfo = manageBuildInfo;
     }
 
     public BuildStepMonitor getRequiredMonitorService() {
@@ -76,30 +88,64 @@ public class GrapesNotifier extends Notifier {
             return true;
         }
 
+        final PrintStream logger = listener.getLogger();
+
+        // Save Grapes Maven report in build folder if necessary
+        if(manageGrapesMavenPlugin){
+            try {
+                final FilePath moduleRoot = build.getModuleRoot();
+                final FilePath reportFile = moduleRoot.child("target/" + GrapesPlugin.GRAPES_WORKING_FOLDER + "/" + GrapesPlugin.GRAPES_MODULE_FILE);
+
+                // No module file, it should be a configuration error
+                if(reportFile.exists()){
+                    final FilePath savedReport = GrapesPlugin.getBuildModuleFile(build);
+                    reportFile.copyTo(savedReport);
+
+                }
+                else{
+                    logger.println("[GRAPES] Grapes Maven plugin report not found. Check that you still need to send Grapes Maven plugin reports for this job or contact your Grapes administrator.");
+                    GrapesPlugin.getLogger().log(Level.WARNING, "[GRAPES] |-> " + reportFile.toURI().toString());
+                }
+            } catch (Exception e) {
+                logger.println("[GRAPES] Grapes Maven plugin report backup aborted.");
+                GrapesPlugin.getLogger().log(Level.SEVERE, "[GRAPES] Failed to save the Maven report file into the build folder." , e);
+            }
+        }
+
+        // Generate build info if necessary
+        if(manageBuildInfo){
+            try{
+                final Map<String, String> buildInfo = BuildInfoNotification.getBuildInfo(build, listener);
+                final FilePath buildInfoFile = GrapesPlugin.getBuildBuildInfoFile(build);
+                buildInfoFile.write(JsonUtils.serialize(buildInfo), null);
+            } catch (Exception e) {
+                logger.println("[GRAPES] Grapes build info generation aborted.");
+                GrapesPlugin.getLogger().log(Level.SEVERE, "[GRAPES] Failed to generate build info file into the build folder.", e);
+            }
+        }
+
         final List<GrapesNotification> notifications = getAllNotifications(build);
         if(notifications.isEmpty()){
-            listener.getLogger().println("[GRAPES] No Grapes notification to send.");
+            logger.println("[GRAPES] No Grapes notification to send.");
             return true;
         }
 
-        final PrintStream logger = listener.getLogger();
         final GrapesConfig config = getConfig();
-
-
         logger.println("[GRAPES] Connection to Grapes");
         logger.println("[GRAPES] Host: " + config.getHost());
         logger.println("[GRAPES] Port: " + config.getPort());
 
         final NotificationHandler notifHandler = new NotificationHandler(config);
-        for(GrapesNotification notification: notifications){
+        for(int i = 0 ; i < notifications.size() ; i++){
             try{
-                notifHandler.send(notification,build);
-                logger.println("[GRAPES] Grapes notification has been performed successfully");
+                notifHandler.send(notifications.get(i),build);
+                int count = i+1;
+                logger.println("[GRAPES] Grapes notification " + count + "/" + notifications.size() + " has been performed successfully");
             } catch (Exception e) {
-                logger.println("[GRAPES] The notification has been postpone. Check your Grapes server configuration & if the Grapes server is available");
+                logger.println("[GRAPES] One Grapes notification has been postpone. Check your Grapes server configuration & if the Grapes server is available");
+                GrapesPlugin.getLogger().log(Level.WARNING, "[GRAPES] Grapes Notification failed:", e);
             }
         }
-
 
         return true;
     }
@@ -123,8 +169,8 @@ public class GrapesNotifier extends Notifier {
     private static List<GrapesNotification> getAllNotifications(final AbstractBuild<?, ?> build) {
         final List<GrapesNotification> notifications = new ArrayList<GrapesNotification>();
 
-        for(GrapesNotificationDescriptor notifDescriptor: GrapesNotificationDescriptor.all()){
-            final GrapesNotification notification = notifDescriptor.createAutoInstance(build);
+        for(GrapesNotificationDescriptor notificationDescriptor: GrapesNotificationDescriptor.all()){
+            final GrapesNotification notification = notificationDescriptor.createAutoInstance(build);
 
             if(notification != null){
                 notifications.add(notification);
