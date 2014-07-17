@@ -24,6 +24,7 @@ Select in the Grapes post actions of your Maven2/3 job.
 
 Select the Grapes server you want to send the information to.
 If you are using the [Grapes Maven plugin], tic the check box "Manage Grapes Maven plugin Notification".
+If you want to send build information to complete module report, tic the check box "Publish module's build info".
 
 ![Select Grapes server](job-config2.png)
 
