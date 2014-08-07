@@ -1,18 +1,28 @@
 package org.axway.grapes.jenkins;
 
 
-import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.maven.AbstractMavenProject;
-import hudson.model.*;
+import hudson.model.BuildListener;
+import hudson.model.Result;
+import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import hudson.util.FormValidation;
+
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+
 import net.sf.json.JSONObject;
+
 import org.apache.commons.lang.StringUtils;
 import org.axway.grapes.commons.utils.JsonUtils;
 import org.axway.grapes.jenkins.config.GrapesConfig;
@@ -24,13 +34,6 @@ import org.axway.grapes.utils.client.GrapesClient;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
-
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
 
 /**
  * Grapes Notifier
@@ -49,13 +52,13 @@ public class GrapesNotifier extends Notifier {
     public Boolean manageGrapesMavenPlugin = false;
 
     // Manage the Build info
-    public Boolean manageBuildInfo = false;
+    private boolean manageBuildInfo;
 
     public Boolean getManageGrapesMavenPlugin() {
         return manageGrapesMavenPlugin;
     }
 
-    public Boolean getManageBuildInfo() {
+    public boolean getManageBuildInfo() {
         return manageBuildInfo;
     }
 
