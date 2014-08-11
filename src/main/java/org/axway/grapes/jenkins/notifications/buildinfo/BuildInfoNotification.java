@@ -1,15 +1,12 @@
 package org.axway.grapes.jenkins.notifications.buildinfo;
 
 
-import groovy.util.slurpersupport.GPathResult;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
-import hudson.maven.MavenBuild;
 import hudson.maven.MavenModuleSet;
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
-import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 import org.axway.grapes.commons.datamodel.Module;
 import org.axway.grapes.jenkins.GrapesNotifier;
@@ -19,7 +16,10 @@ import org.axway.grapes.jenkins.notifications.GrapesNotificationDescriptor;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TimeZone;
 import java.util.logging.Level;
 
 /**
