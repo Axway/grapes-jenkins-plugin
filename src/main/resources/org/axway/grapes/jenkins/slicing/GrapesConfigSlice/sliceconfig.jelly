@@ -1,0 +1,15 @@
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+    <span style="font-weight: bold; font-style: italic">${it.spec.name}${viewDisplayPart}</span>
+    <table width="70%">
+        <tr>
+            <th><b>Grapes servers</b></th>
+            <th><b>Item Names</b></th>
+        </tr>
+        <j:forEach var="serverName" items="${it.getGrapesServerNames()}">
+        <tr name="serverConfiguration">
+            <td width="20%%">${serverName}</td>
+            <td width="50%"><f:textarea name="${serverName}" value="${it.getItemNamesString(serverName)}"/></td>
+        </tr>
+        </j:forEach>
+    </table>
+</j:jelly>

@@ -44,10 +44,10 @@ import java.util.logging.Level;
 public class GrapesNotifier extends Notifier {
 
     // Name of current Grapes configuration
-    public String configName;
+    private String configName;
 
     // Manage the reports of Grapes Maven plugin
-    public Boolean manageGrapesMavenPlugin = false;
+    private Boolean manageGrapesMavenPlugin = false;
 
     // Manage the Build info
     private boolean manageBuildInfo;
@@ -58,6 +58,22 @@ public class GrapesNotifier extends Notifier {
 
     public boolean getManageBuildInfo() {
         return manageBuildInfo;
+    }
+
+    public String getConfigName() {
+        return configName;
+    }
+
+    public void setManageGrapesMavenPlugin(final Boolean manageGrapesMavenPlugin) {
+        this.manageGrapesMavenPlugin = manageGrapesMavenPlugin;
+    }
+
+    public void setManageBuildInfo(final boolean manageBuildInfo) {
+        this.manageBuildInfo = manageBuildInfo;
+    }
+
+    public void setConfigName(final String configName) {
+        this.configName = configName;
     }
 
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
