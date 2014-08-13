@@ -2,14 +2,18 @@ package org.axway.grapes.jenkins.slicing;
 
 
 import configurationslicing.BooleanSlicer;
+import configurationslicing.UnorderedStringSlicer;
 import hudson.Extension;
 import hudson.model.AbstractProject;
 import jenkins.model.Jenkins;
 import org.axway.grapes.jenkins.GrapesNotifier;
 import org.axway.grapes.jenkins.GrapesPlugin;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
 
 /**
  * Maven Notification Slicer
@@ -20,7 +24,7 @@ import java.util.List;
  * @author jdcoffre
  */
 @Extension(optional = true)
-public class MavenNotificationSlicer extends BooleanSlicer {
+public class MavenNotificationSlicer extends UnorderedStringSlicer {
 
     public MavenNotificationSlicer() {
         super(new MavenNotificationSpec());
@@ -32,15 +36,15 @@ public class MavenNotificationSlicer extends BooleanSlicer {
         return spec.getWorkDomain().size() > 0;
     }
 
-    private static class MavenNotificationSpec implements BooleanSlicerSpec<AbstractProject<?,?>> {
+    private static class MavenNotificationSpec extends UnorderedStringSlicerSpec<AbstractProject<?,?>> {
         @Override
         public String getName() {
-            return "Grapes Maven report notification (bool)";
+            return "Grapes Maven report notification";
         }
 
         @Override
         public String getUrl() {
-            return "grapesmavennotif";
+            return "grapesmaven";
         }
 
         @Override
@@ -55,13 +59,27 @@ public class MavenNotificationSlicer extends BooleanSlicer {
         }
 
         @Override
-        public boolean getValue(final AbstractProject<?, ?> item) {
+        public List<String> getCommonValueStrings() {
+            List<String> values = new ArrayList<String>();
+            values.add(String.valueOf(true));
+            values.add(String.valueOf(false));
+            return values;
+        }
+
+        @Override
+        public boolean isBlankNeededForValues() {
+            return false;
+        }
+
+        @Override
+        public List<String> getValues(final AbstractProject<?, ?> item) {
             final GrapesNotifier notifier = GrapesPlugin.getGrapesNotifier(item);
             if(notifier != null){
-                return notifier.getManageGrapesMavenPlugin();
+                final Boolean manageBuildInfo = notifier.getManageGrapesMavenPlugin();
+                return Collections.singletonList(String.valueOf(manageBuildInfo));
             }
             // should never happen
-            return false;
+            return Collections.singletonList("false");
         }
 
         @Override
@@ -70,14 +88,27 @@ public class MavenNotificationSlicer extends BooleanSlicer {
         }
 
         @Override
-        public boolean setValue(final AbstractProject<?, ?> item, boolean value) {
+        public boolean setValues(final AbstractProject<?, ?> item, final List<String> values) {
             final GrapesNotifier notifier = GrapesPlugin.getGrapesNotifier(item);
             if(notifier != null){
-                notifier.setManageGrapesMavenPlugin(value);
+                final String configuration = values.get(0);
+                notifier.setManageGrapesMavenPlugin(Boolean.valueOf(configuration));
+
+                try {
+                    item.save();
+                } catch (IOException e) {
+                    GrapesPlugin.getLogger().log(Level.SEVERE, "Failed to update Grapes Maven report notification for " + item.getName() + " using slicing.", e);
+                    return false;
+                }
                 return true;
             }
             // should never happen
             return false;
+        }
+
+        @Override
+        public String getDefaultValueString() {
+            return null;
         }
     }
 }
