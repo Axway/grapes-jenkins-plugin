@@ -3,7 +3,7 @@ package org.axway.grapes.jenkins.slicing;
 
 import configurationslicing.Slicer;
 import hudson.Extension;
-import hudson.maven.AbstractMavenProject;
+import hudson.maven.MavenModuleSet;
 import jenkins.model.Jenkins;
 import org.axway.grapes.jenkins.GrapesNotifier;
 import org.axway.grapes.jenkins.GrapesNotifier.GrapesNotifierDescriptor;
@@ -24,7 +24,7 @@ import java.util.logging.Level;
  * @author jdcoffre
  */
 @Extension(optional = true)
-public class GrapesConfigSlicer implements Slicer<GrapesConfigSlice, AbstractMavenProject> {
+public class GrapesConfigSlicer implements Slicer<GrapesConfigSlice, MavenModuleSet> {
 
     @Override
     public String getName() {
@@ -37,8 +37,8 @@ public class GrapesConfigSlicer implements Slicer<GrapesConfigSlice, AbstractMav
     }
 
     @Override
-    public List<AbstractMavenProject> getWorkDomain() {
-        return Jenkins.getInstance().getAllItems(AbstractMavenProject.class);
+    public List<MavenModuleSet> getWorkDomain() {
+        return Jenkins.getInstance().getAllItems(MavenModuleSet.class);
     }
 
     @Override
@@ -59,7 +59,7 @@ public class GrapesConfigSlicer implements Slicer<GrapesConfigSlice, AbstractMav
     }
 
     @Override
-    public GrapesConfigSlice accumulate(final GrapesConfigSlice grapesSlice, final AbstractMavenProject project) {
+    public GrapesConfigSlice accumulate(final GrapesConfigSlice grapesSlice, final MavenModuleSet project) {
         String configName = GrapesConfigSlice.DISABLED;
         final GrapesNotifier grapesNotifier = GrapesPlugin.getGrapesNotifier(project);
         if(grapesNotifier != null){
@@ -70,7 +70,7 @@ public class GrapesConfigSlicer implements Slicer<GrapesConfigSlice, AbstractMav
     }
 
     @Override
-    public boolean transform(final GrapesConfigSlice grapesSlice, final AbstractMavenProject abstractProject) {
+    public boolean transform(final GrapesConfigSlice grapesSlice, final MavenModuleSet abstractProject) {
         final String configurationName = grapesSlice.getConfiguration(abstractProject.getName());
         GrapesNotifier notifier = GrapesPlugin.getGrapesNotifier(abstractProject);
 
@@ -111,7 +111,7 @@ public class GrapesConfigSlicer implements Slicer<GrapesConfigSlice, AbstractMav
     }
 
     @Override
-    public int compareTo(final Slicer<GrapesConfigSlice, AbstractMavenProject> o) {
+    public int compareTo(final Slicer<GrapesConfigSlice, MavenModuleSet> o) {
         return getName().compareToIgnoreCase(o.getName());
     }
 }
