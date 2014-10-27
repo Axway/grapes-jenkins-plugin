@@ -3,7 +3,7 @@
 
     <groupId>org.axway.grapes</groupId>
     <artifactId>grapes-jenkins-plugin</artifactId>
-    <version>1.2.3-SNAPSHOT</version>
+    <version>1.2.3</version>
     <packaging>hpi</packaging>
 
     <name>Grapes Jenkins plugin</name>
@@ -26,7 +26,7 @@
 	<connection>scm:git:git@github.com:Axway/grapes-jenkins-plugin.git</connection>
     	<url>scm:git:git@github.com:Axway/grapes-jenkins-plugin.git</url>
     	<developerConnection>scm:git:git@github.com:Axway/grapes-jenkins-plugin.git</developerConnection>
-	<tag>HEAD</tag>
+	<tag>1.2.3</tag>
     </scm>
 
     <developers>
