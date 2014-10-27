@@ -1,3 +1,8 @@
+1.2.3
+------
+* Order the send of notification to prevent build info send 404 error
+* Update Grapes Utils dependency to 1.4.3
+
 1.2.2
 ------
 * Implement Jenkins Configuration Slicing extension points
