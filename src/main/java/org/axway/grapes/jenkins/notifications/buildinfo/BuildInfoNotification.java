@@ -111,6 +111,7 @@ public class BuildInfoNotification extends GrapesNotification {
         buildInfo.put(GrapesPlugin.BUILD_INFO_JENKINS_HOST, env.get("JENKINS_URL"));
         buildInfo.put(GrapesPlugin.BUILD_INFO_JENKINS_NODE, env.get("NODE_NAME"));
         buildInfo.put(GrapesPlugin.BUILD_INFO_JENKINS_JOB_URL, env.get("JOB_URL"));
+        buildInfo.put(GrapesPlugin.BUILD_INFO_JENKINS_BUILD_URL, env.get("BUILD_URL"));
 
         // Manage date info
         final SimpleDateFormat time_format = new SimpleDateFormat(GrapesPlugin.BUILD_INFO_DATE_FORMAT);
