@@ -44,6 +44,8 @@ public class GrapesPlugin extends Plugin {
 
     public static final String BUILD_INFO_JENKINS_JOB_URL = "jenkins-job-url";
 
+    public static final String BUILD_INFO_JENKINS_BUILD_URL = "jenkins-build-url";
+
     public static final String BUILD_INFO_MAVEN_VERSION = "maven-version";
 
     public static final String BUILD_INFO_MAVEN_GOAL = "maven-goal";
